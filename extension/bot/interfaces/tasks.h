@@ -574,19 +574,68 @@ public:
 
 	// These functions are used to trigger a state change on a Task.
 	
-	// Keep the current task running
+	/**
+	 * @brief Keep the current task running.
+	 * @return Task result.
+	 */
 	[[nodiscard]] TaskResult<BotClass> Continue() const;
-	// Switch to a new task, the current task will be destroyed
+	/**
+	 * @brief Switch to a new task, the current task will be destroyed
+	 * @param newTask Task to switch to.
+	 * @param reason Result reason. (Printed to console when debugging is enabled).
+	 * @return Task result.
+	 */
 	[[nodiscard]] TaskResult<BotClass> SwitchTo(AITask<BotClass>* newTask, const char* reason) const;
-	// Put the current task on pause and begin running another one on it's place, the current task will be kept and returned to when the new task ends
+	/**
+	 * @brief Puts the current task on pause and begin running another one on it's place, the current task will be kept and returned to when the new task ends.
+	 * @param newTask Task to start running.
+	 * @param reason Result reason. (Printed to console when debugging is enabled).
+	 * @return Task result.
+	 */
 	[[nodiscard]] TaskResult<BotClass> PauseFor(AITask<BotClass>* newTask, const char* reason) const;
-	// Ends and destroy the current task
+	/**
+	 * @brief Ends (stop running) the current task.
+	 * The task object is automatically deleted.
+	 * @param reason Result reason. (Printed to console when debugging is enabled).
+	 * @return Task result.
+	 */
 	[[nodiscard]] TaskResult<BotClass> Done(const char* reason) const;
-
+	/**
+	 * @brief Try to keep the current task running. This is the default answer for events.
+	 * Paused tasks will respond to the current event.
+	 * @param priority Event response priority, the response with the highest priority is selected.
+	 * @return Task event response result.
+	 */
 	[[nodiscard]] TaskEventResponseResult<BotClass> TryContinue(EventResultPriorityType priority = PRIORITY_DONT_CARE) const;
+	/**
+	 * @brief Try to switch to the given task.
+	 * @param task Task to replace the current task.
+	 * @param priority Event response priority, the response with the highest priority is selected.
+	 * @param reason Result reason. (Printed to console when debugging is enabled).
+	 * @return Task event response result.
+	 */
 	[[nodiscard]] TaskEventResponseResult<BotClass> TrySwitchTo(AITask<BotClass>* task, EventResultPriorityType priority = PRIORITY_DONT_CARE, const char* reason = nullptr) const;
+	/**
+	 * @brief Try to pause the current task and start another task on top of the current one.
+	 * @param task Task to be started on top of the current task.
+	 * @param priority Event response priority, the response with the highest priority is selected.
+	 * @param reason Result reason. (Printed to console when debugging is enabled).
+	 * @return Task event response result.
+	 */
 	[[nodiscard]] TaskEventResponseResult<BotClass> TryPauseFor(AITask<BotClass>* task, EventResultPriorityType priority = PRIORITY_DONT_CARE, const char* reason = nullptr) const;
+	/**
+	 * @brief Try to end the current task. The task will be deleted automatically.
+	 * @param priority Event response priority, the response with the highest priority is selected.
+	 * @param reason Result reason. (Printed to console when debugging is enabled).
+	 * @return Task event response result.
+	 */
 	[[nodiscard]] TaskEventResponseResult<BotClass> TryDone(EventResultPriorityType priority = PRIORITY_DONT_CARE, const char* reason = nullptr) const;
+	/**
+	 * @brief Try to maintain the curernt task running. Tasks below this one won't respond to events.
+	 * @param priority Event response priority, the response with the highest priority is selected.
+	 * @return Task event response result.
+	 */
+	[[nodiscard]] TaskEventResponseResult<BotClass> TryToMaintain(EventResultPriorityType priority = PRIORITY_DONT_CARE) const;
 
 	virtual TaskEventResponseResult<BotClass> OnDebugMoveToCommand(BotClass* bot, const Vector& moveTo) { return TryContinue(); }
 	virtual TaskEventResponseResult<BotClass> OnNavAreaChanged(BotClass* bot, CNavArea* oldArea, CNavArea* newArea) { return TryContinue(); }
@@ -617,6 +666,7 @@ public:
 	virtual TaskEventResponseResult<BotClass> OnPathStatusChanged(BotClass* bot) { return TryContinue(); }
 	virtual TaskEventResponseResult<BotClass> OnBombPlanted(BotClass* bot, const Vector& position, const int teamIndex, CBaseEntity* player, CBaseEntity* ent) { return TryContinue(); }
 	virtual TaskEventResponseResult<BotClass> OnBombDefused(BotClass* bot, const Vector& position, const int teamIndex, CBaseEntity* player, CBaseEntity* ent) { return TryContinue(); }
+	virtual TaskEventResponseResult<BotClass> OnDangerousEntityChanged(BotClass* bot, CBaseEntity* newent, CBaseEntity* oldent) { return TryContinue(); }
 
 	/**
 	 * @brief The task that comes after this
@@ -1185,6 +1235,11 @@ private:
 	{
 		PROPAGATE_TASK_EVENT_WITH_4_ARGS(OnBombDefused, position, teamIndex, player, ent);
 	}
+
+	void OnDangerousEntityChanged(CBaseEntity* newent, CBaseEntity* oldent) final
+	{
+		PROPAGATE_TASK_EVENT_WITH_2_ARGS(OnDangerousEntityChanged, newent, oldent);
+	}
 };
 
 template<typename BotClass>
@@ -1333,6 +1388,12 @@ template<typename BotClass>
 inline TaskEventResponseResult<BotClass> AITask<BotClass>::TryDone(EventResultPriorityType priority, const char* reason) const
 {
 	return TaskEventResponseResult<BotClass>(priority, TASK_DONE, nullptr, reason);
+}
+
+template<typename BotClass>
+inline TaskEventResponseResult<BotClass> AITask<BotClass>::TryToMaintain(EventResultPriorityType priority) const
+{
+	return TaskEventResponseResult<BotClass>(priority, TASK_MAINTAIN, nullptr, nullptr);
 }
 
 template<typename BotClass>

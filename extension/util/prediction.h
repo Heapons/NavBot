@@ -40,6 +40,25 @@ namespace pred
 	};
 
 	Vector IterativeBallisticLead(const Vector& shooterPosition, const Vector& initialTargetPosition, const Vector& targetVelocity, const ProjectileData_t& data, const int maxIterations);
+	/**
+	 * @brief Predicts the position a straight projectile will hit/land.
+	 * This is best used for projectiles without gravity and constant speed. (IE: rockets)
+	 * @param projectile Projectile to predict the position.
+	 * @param mask Mask used in traces.
+	 * @param maxtime Optional, how far in the future to predict in seconds.
+	 * @return Predicted projectile position.
+	 */
+	Vector PredictStraightProjectileHitPosition(CBaseEntity* projectile, unsigned int mask, const float maxtime = 10.0f);
+	/**
+	 * @brief Predicts the position a projectile will hit/land.
+	 * This should be used with projectiles that have gravity.
+	 * @param projectile Projectile to predict.
+	 * @param mask Mask used in traces.
+	 * @param maxtime Optional, how far in the future to predict in seconds.
+	 * @param untilground Optional, if true, stops predicting when the entity is determined to have hit a ground.
+	 * @return Predicted projectile position.
+	 */
+	Vector PredictBallisticProjectileHitPosition(CBaseEntity* projectile, unsigned int mask, const float maxtime = 1.0f, const bool untilground = false);
 
 	struct PredictionEntityData
 	{

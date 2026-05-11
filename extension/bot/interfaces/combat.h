@@ -20,6 +20,7 @@ public:
 	static constexpr float LOOK_AROUND_TIMER_BASE_MAX = 7.0f;
 	static constexpr int LOOK_AROUND_MIN_SKILL = 25;
 	static constexpr float POST_COMBAT_TIMER_DURATION = 5.0f;
+	static constexpr int DANGER_SCAN_IGNORE_FOV_SKILL = 90;
 
 	struct CombatData
 	{
@@ -156,6 +157,16 @@ public:
 	const bool IsVisibleButLineOfFireIsObstructed() const { return m_combatData.is_visible && !m_combatData.can_fire; }
 	// Returns the attack type selected to be used against the current enemy
 	botweapons::AttackType GetSelectedAttackType() const { return m_combatData.selected_attack_type; }
+	// Reads danger scan values from gamedata.
+	static bool DangerScanParseGamedata();
+	// Returns true if danger scan is enabled.
+	static bool IsDangerScanEnabled() { return s_allowDangerScan; }
+	// Returns true if danger scan should check the projectile's team and ignore projectiles of the same team as the bot.
+	static bool IsDangerScanTeamCheckEnabled() { return s_dangerCheckTeam; }
+	// Returns a set of entities that are considered a danger source.
+	static const std::unordered_set<std::string>& GetDangerScanEntities() { return s_dangerEnts; }
+	// Returns the entity selected as the most dangerous entity in the last danger scan update. NULL if none or if the entity is no longer valid.
+	CBaseEntity* GetMostDangerousEntity() const { return m_lastDangerEntity.Get(); }
 protected:
 	/**
 	 * @brief Called when the last used weapon in combat has changed.
@@ -322,6 +333,8 @@ protected:
 	virtual const char* GetEnemyName(const CKnownEntity* enemy) const;
 	// Sets the last reported place name index.
 	void SetLastReportedPlace(unsigned int place) { m_lastPlace = place; }
+	// Timer for danger scans.
+	CountdownTimer& GetDangerScanTimer() { return m_dangerScanTimer; }
 	// Timer for weapon reloads.
 	CountdownTimer& GetReloadTimer() { return m_reloadTimer; }
 	// Timer for look around.
@@ -340,9 +353,36 @@ protected:
 	 * @brief Called after a bot has left combat.
 	 */
 	virtual void OnPostCombat();
+	// Returns true if the bot is allowed to scan for danger.
+	virtual bool CanScanForDanger() const;
+	/**
+	 * @brief Called to determine if the given entity should be classified as a danger source to the bot.
+	 * @param entity Entity being checked.
+	 * @return True if a danger, false otherwise.
+	 */
+	virtual bool IsEntityADangerSource(CBaseEntity* entity) const;
+	/**
+	 * @brief Called to determine if the bot should be aware of this danger entity (IE: has clear line of sight).
+	 * @param entity Entity being checked.
+	 * @return True if the bot should be aware, false if not.
+	 */
+	virtual bool IsAwareOfDangerEntity(CBaseEntity* entity) const;
+	/**
+	 * @brief Called to filter dangerous entities and select the most dangerous one.
+	 * @param first First entity choice.
+	 * @param second Second entity choice.
+	 * @return Selected entity. Returning NULL will end the search and set the most dangerous entity to NULL.
+	 */
+	virtual CBaseEntity* SelectMostDangerousEntity(CBaseEntity* first, CBaseEntity* second) const;
+	/**
+	 * @brief Sets the most dangerous entity.
+	 * @param entity Entity to store.
+	 */
+	void SetMostDangerousEntity(CBaseEntity* entity) { m_lastDangerEntity = entity; }
 private:
 	CBaseEntity* m_lastWeaponPtr;
 	const CKnownEntity* m_lastThreatPtr;
+	CountdownTimer m_dangerScanTimer;
 	CountdownTimer m_disableCombatTimer;
 	CountdownTimer m_dontFireTimer;
 	CountdownTimer m_unscopeTimer;
@@ -365,8 +405,16 @@ private:
 	bool m_reAim;
 	bool m_shouldReloadPostCombat;
 	unsigned int m_lastPlace;
+	CHandle<CBaseEntity> m_lastDangerEntity; // last selected danger entity.
 
 	IDecisionQuery::DesiredAimSpot SelectClearAimSpot(const bool allowheadshots) const;
+
+	/* Danger Scan */
+	static inline bool s_allowDangerScan{ true };
+	static inline bool s_dangerCheckTeam{ true };
+	static inline std::unordered_set<std::string> s_dangerEnts{};
+
+	void DangerScanUpdate(); // runs danger scan logic
 };
 
 namespace combatutils

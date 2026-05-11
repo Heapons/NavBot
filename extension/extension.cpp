@@ -236,6 +236,12 @@ bool NavBotExt::SDK_OnLoad(char* error, size_t maxlen, bool late)
 		return false;
 	}
 
+	if (!ICombat::DangerScanParseGamedata())
+	{
+		ke::SafeStrcpy(error, maxlen, "Failed to initialize combat interface gamedata!");
+		return false;
+	}
+
 	const char* value = m_cfg_navbot->GetKeyValue("HookPlayerRunCMD");
 
 	if (value)

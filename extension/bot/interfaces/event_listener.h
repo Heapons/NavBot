@@ -87,6 +87,7 @@ public:
 	virtual void OnPathStatusChanged(); // Called by the path processor to notify the path status has changed
 	virtual void OnBombPlanted(const Vector& position, const int teamIndex, CBaseEntity* player, CBaseEntity* ent); // Called when a bomb has been planted, data passed depends on the current mod
 	virtual void OnBombDefused(const Vector& position, const int teamIndex, CBaseEntity* player, CBaseEntity* ent); // Called when a bomb has been defused, data passed depends on the current mod
+	virtual void OnDangerousEntityChanged(CBaseEntity* newent, CBaseEntity* oldent); // Called when the most dangereous entity determined by the combat interface changes.
 };
 
 inline void IEventListener::OnDebugMoveToCommand(const Vector& moveTo)
@@ -462,6 +463,19 @@ inline void IEventListener::OnBombDefused(const Vector& position, const int team
 		for (auto listener : *vec)
 		{
 			listener->OnBombDefused(position, teamIndex, player, ent);
+		}
+	}
+}
+
+inline void IEventListener::OnDangerousEntityChanged(CBaseEntity* newent, CBaseEntity* oldent)
+{
+	auto vec = GetListenerVector();
+
+	if (vec)
+	{
+		for (auto listener : *vec)
+		{
+			listener->OnDangerousEntityChanged(newent, oldent);
 		}
 	}
 }

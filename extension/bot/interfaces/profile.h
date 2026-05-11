@@ -40,6 +40,8 @@ public:
 		health_low_percent = 0.5f;
 		numerical_disadvantage_retreat_threshold = 5;
 		prediction_max_iterations = 1;
+		danger_scan_interval = 2.0f;
+		danger_scan_size = 256.0f;
 	}
 
 	virtual ~DifficultyProfile() = default;
@@ -74,6 +76,9 @@ public:
 	inline const int GetRetreatFromNumericalDisadvantageThreshold() const { return numerical_disadvantage_retreat_threshold; }
 	inline const int GetMaxPredictionIterations() const { return prediction_max_iterations; }
 	inline const bool IsAllowedToUsePhysicsPrediction() const { return use_physics_prediction; }
+	inline const bool IsAllowedToScanForDanger() const { return danger_scan_interval > 0.0f; }
+	inline const float GetDangerScanFrequency() const { return danger_scan_interval; }
+	inline const float GetDangerScanSize() const { return danger_scan_size; }
 
 	inline void SetSkillLevel(const int skill) { skill_level = skill; }
 	inline void SetGameAwareness(const int awareness) { game_awareness = awareness; }
@@ -95,6 +100,8 @@ public:
 	inline void SetRetreatFromNumericalDisadvantageThreshold(const int v) { numerical_disadvantage_retreat_threshold = v; }
 	inline void SetMaxPredictionIterations(const int v) { prediction_max_iterations = v; }
 	inline void SetIsAllowedToUsePhysicsPrediction(const bool state) { use_physics_prediction = state; }
+	inline void SetDangerScanFrequency(const float v) { danger_scan_interval = v; }
+	inline void SetDangerScanSize(const float v) { danger_scan_size = v; }
 
 private:
 	int skill_level; // the skill level this profile represents
@@ -117,6 +124,8 @@ private:
 	float health_low_percent; // If the bot HP % is less than this, the bot health is low
 	int numerical_disadvantage_retreat_threshold; // If the numerical disadvantage (number of enemies - number of allies) is greater than this, the bot will retreat
 	int prediction_max_iterations; // Maximum number of iterations when prediting projectiles.
+	float danger_scan_interval; // Frequency in seconds of scans for incoming danger (grenades, projectiles, etc).
+	float danger_scan_size; // Size of the danger scan.
 };
 
 // Bot difficulty profile manager

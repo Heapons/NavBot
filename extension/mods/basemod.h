@@ -178,6 +178,15 @@ public:
 	 * @return True if a file was found, false otherwise.
 	 */
 	bool BuildPathToModFile(const std::string_view& basepath, const std::string_view& filepath, const std::string_view& userfilepath, std::string& path) const;
+	/**
+	 * @brief Called to determine if the given bot is in a projectile's path and/or explosion radius.
+	 * Bots will call this function to known if they should take cover from an incoming projectile.
+	 * @param[in] bot The bot who may be hit by a projectile.
+	 * @param[in] projectile The projectile entity.
+	 * @param[out] hitPos Predicted position of where the projectile will hit.
+	 * @return True if the bot will get hit by the projectile, false otherwise.
+	 */
+	virtual bool IsInProjectilesPath(CBaseBot* bot, CBaseEntity* projectile, Vector& hitPos) const;
 protected:
 	std::unique_ptr<CModSettings> m_modsettings;
 	std::unique_ptr<CWeaponInfoManager> m_weaponinfomanager;

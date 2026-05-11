@@ -489,5 +489,55 @@ namespace trace
 
 		return false;
 	}
+
+	bool CTraceFilterIgnoreCombatChars::ShouldHitEntity(IHandleEntity* pHandleEntity, int contentsMask)
+	{
+		if (CTraceFilterSimple::ShouldHitEntity(pHandleEntity, contentsMask))
+		{
+			CBaseEntity* pEntity = EntityFromEntityHandle(pHandleEntity);
+
+			if (pEntity)
+			{
+				if (modhelpers->IsCombatCharacter(pEntity))
+				{
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		return false;
+	}
+
+	bool CTraceFilterTeam::ShouldHitEntity(IHandleEntity* pHandleEntity, int contentsMask)
+	{
+		if (CTraceFilterSimple::ShouldHitEntity(pHandleEntity, contentsMask))
+		{
+			CBaseEntity* pEntity = EntityFromEntityHandle(pHandleEntity);
+
+			if (pEntity)
+			{
+				if (m_isHit)
+				{
+					if (modhelpers->GetEntityTeamNumber(pEntity) == m_teamNum)
+					{
+						return true;
+					}
+				}
+				else
+				{
+					if (modhelpers->GetEntityTeamNumber(pEntity) != m_teamNum)
+					{
+						return true;
+					}
+				}
+			}
+
+			return true;
+		}
+
+		return false;
+	}
 }
 

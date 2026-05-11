@@ -144,6 +144,7 @@ void ISensor::Reset()
 	m_updateNonPlayerTimer.Invalidate();
 	m_shareKnownsTimer.Start(ISensor::UPDATE_SHARED_MEMORY_FREQ);
 	m_updateStatisticsTimer.Reset();
+	m_primarythreatoverride.reset(nullptr);
 	m_primarythreatcache = nullptr;
 	m_statsvisibleallies = 0;
 	m_statsvisibleenemies = 0;
@@ -548,6 +549,10 @@ const CKnownEntity* ISensor::GetPrimaryKnownThreat(const bool onlyvisible)
 	VPROF_BUDGET("ISensor::GetPrimaryKnownThreat", "NavBot");
 #endif // EXT_VPROF_ENABLED
 
+	CKnownEntity* primaryoverride = GetPrimaryThreatOverride();
+	// use primary override if we have one.
+	if (primaryoverride && primaryoverride->IsValid()) { return primaryoverride; }
+
 	if (m_knownlist.empty())
 		return nullptr;
 
@@ -789,6 +794,23 @@ void ISensor::UpdateKnownEntities()
 		UpdateStatistics();
 	}
 
+	// Update the primary override if we have one.
+	CKnownEntity* primaryoverride = GetPrimaryThreatOverride();
+
+	if (primaryoverride && primaryoverride->IsValid())
+	{
+		if (IsAbleToSee(primaryoverride->GetEntity()))
+		{
+			primaryoverride->UpdatePosition();
+			primaryoverride->MarkAsFullyVisible();
+			primaryoverride->MarkLastKnownPositionAsSeen();
+		}
+		else
+		{
+			primaryoverride->MarkAsNotVisible();
+		}
+	}
+
 	m_lastupdatetime = gpGlobals->curtime;
 }
 
@@ -837,6 +859,8 @@ void ISensor::UpdateVisibleEntities(const std::vector<edict_t*>& visibleVec, con
 		}
 
 		CBaseEntity* pEntity = known.GetEntity();
+		/* This should never happen */
+		EXT_ASSERT(pEntity != nullptr, "NULL entity in ISensor::UpdateVisibleEntities!");
 
 		if (known.GetTimeSinceLastInfo() < 0.2f)
 		{

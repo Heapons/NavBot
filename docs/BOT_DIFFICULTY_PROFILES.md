@@ -71,6 +71,8 @@ Example profile
 | health_low_percent | If the bot HP% is less than this value, the bot is low on health. |
 | numerical_disadvantage_retreat_threshold | Threshold for retreating due to numerical disadvantage (visible enemies minus nearby allies). |
 | max_pred_it | Maximum number of iterations when predicting the target's position for projectile based weapons. |
+| danger_scan_interval | Frequency in seconds to scan for incoming danger (grenades, projectiles, etc). Setting this to a negative number disables it. |
+| danger_scan_size | Size of the area scanned for incoming danger. |
 
 
 ## Notes

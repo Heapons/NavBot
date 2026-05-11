@@ -91,7 +91,7 @@ Vector pred::IterativeEnginePredictedProjectileLead(CBaseEntity* target, const V
 	VPROF_BUDGET("pred::IterativeEnginePredictedProjectileLead", "NavBot");
 #endif // EXT_VPROF_ENABLED
 
-	static CEnginePrediction enginepred;
+	CEnginePrediction enginepred;
 	enginepred.SetTraceMask(MASK_PLAYERSOLID);
 	Vector targetPos = initialTargetPosition;
 	Vector targetDir = targetPos - shooterPosition;
@@ -184,6 +184,35 @@ Vector pred::IterativeBallisticLead(const Vector& shooterPosition, const Vector&
 	}
 
 	return targetPos;
+}
+
+Vector pred::PredictStraightProjectileHitPosition(CBaseEntity* projectile, unsigned int mask, const float maxtime)
+{
+	Vector projOrigin = UtilHelpers::getEntityOrigin(projectile);
+	Vector velocity{ 0.0f, 0.0f, 0.0f };
+	entityprops::GetEntityAbsVelocity(projectile, velocity);
+	Vector endPos = projOrigin + (velocity * maxtime);
+	trace::CTraceFilterSimple filter(projectile, reinterpret_cast<IServerUnknown*>(projectile)->GetCollideable()->GetCollisionGroup());
+	trace_t tr;
+	trace::line(projOrigin, endPos, mask, &filter, tr);
+	return tr.endpos;
+}
+
+Vector pred::PredictBallisticProjectileHitPosition(CBaseEntity* projectile, unsigned int mask, const float maxtime, const bool untilground)
+{
+	CEnginePrediction enginepred;
+	enginepred.SetTraceMask(mask);
+	
+	if (untilground)
+	{
+		enginepred.PredictUntilGround(projectile, maxtime);
+	}
+	else
+	{
+		enginepred.PredictEntity(projectile, maxtime);
+	}
+
+	return enginepred.GetPredictionData().pos;
 }
 
 pred::PredictionEntityData::PredictionEntityData()

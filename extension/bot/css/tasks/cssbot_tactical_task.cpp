@@ -7,6 +7,7 @@
 #include <bot/tasks_shared/bot_shared_prereq_move_to_pos.h>
 #include <bot/tasks_shared/bot_shared_prereq_use_ent.h>
 #include <bot/tasks_shared/bot_shared_prereq_wait.h>
+#include <bot/tasks_shared/bot_shared_take_cover_from_danger.h>
 #include <bot/interfaces/behavior_utils.h>
 #include "cssbot_buy_weapons_task.h"
 #include "cssbot_scenario_task.h"
@@ -58,6 +59,21 @@ TaskEventResponseResult<CCSSBot> CCSSBotTacticalTask::OnKilled(CCSSBot* bot, con
 TaskEventResponseResult<CCSSBot> CCSSBotTacticalTask::OnNavAreaChanged(CCSSBot* bot, CNavArea* oldArea, CNavArea* newArea)
 {
 	BOTBEHAVIOR_IMPLEMENT_PREREQUISITE_CHECK(CCSSBot, CCSSBotPathCost);
+
+	return TryContinue(PRIORITY_LOW);
+}
+
+TaskEventResponseResult<CCSSBot> CCSSBotTacticalTask::OnDangerousEntityChanged(CCSSBot* bot, CBaseEntity* newent, CBaseEntity* oldent)
+{
+	Vector hitpos = vec3_origin;
+
+	if (extmanager->GetMod()->IsInProjectilesPath(bot, newent, hitpos))
+	{
+		// for flashbangs, search for cover behind a wall, else just get away from the blast radius.
+		bool useLOS = UtilHelpers::FClassnameIs(newent, "flashbang_projectile");
+
+		return TryPauseFor(new CBotSharedTakeCoverFromDangerTask<CCSSBot, CCSSBotPathCost>(newent, hitpos, useLOS), PRIORITY_MEDIUM, "Taking cover from incoming projectile!");
+	}
 
 	return TryContinue(PRIORITY_LOW);
 }

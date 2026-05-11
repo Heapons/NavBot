@@ -11,6 +11,7 @@ public:
 
 	TaskEventResponseResult<CDoDSBot> OnNavAreaChanged(CDoDSBot* bot, CNavArea* oldArea, CNavArea* newArea) override;
 	TaskEventResponseResult<CDoDSBot> OnInjured(CDoDSBot* bot, const CTakeDamageInfo& info) override;
+	TaskEventResponseResult<CDoDSBot> OnDangerousEntityChanged(CDoDSBot* bot, CBaseEntity* newent, CBaseEntity* oldent) override;
 
 	const char* GetName() const override { return "TacticalMonitor"; }
 private:

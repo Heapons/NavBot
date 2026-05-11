@@ -5,11 +5,16 @@
 #include <extension.h>
 #include <manager.h>
 #include <util/helpers.h>
+#include <util/prediction.h>
 #include <extplayer.h>
 #include <bot/basebot.h>
 #include <navmesh/nav_mesh.h>
 #include <server_class.h>
 #include "basemod.h"
+
+#ifdef EXT_VPROF_ENABLED
+#include <tier0/vprof.h>
+#endif // EXT_VPROF_ENABLED
 
 #undef min
 #undef max
@@ -69,6 +74,10 @@ void CBaseMod::PostCreation()
 
 void CBaseMod::Frame()
 {
+#ifdef EXT_VPROF_ENABLED
+	VPROF_BUDGET("CBaseMod::Frame", "NavBot");
+#endif // EXT_VPROF_ENABLED
+
 	for (auto& sbm : m_teamsharedmemory)
 	{
 		if (sbm)
@@ -80,6 +89,10 @@ void CBaseMod::Frame()
 
 void CBaseMod::Update()
 {
+#ifdef EXT_VPROF_ENABLED
+	VPROF_BUDGET("CBaseMod::Update", "NavBot");
+#endif // EXT_VPROF_ENABLED
+
 	for (auto& sbm : m_teamsharedmemory)
 	{
 		if (sbm)
@@ -344,18 +357,63 @@ bool CBaseMod::BuildPathToModFile(const std::string_view& basepath, const std::s
 	return false;
 }
 
+bool CBaseMod::IsInProjectilesPath(CBaseBot* bot, CBaseEntity* projectile, Vector& hitPos) const
+{
+#ifdef EXT_VPROF_ENABLED
+	VPROF_BUDGET("CBaseMod::IsInProjectilesPath", "NavBot");
+#endif // EXT_VPROF_ENABLED
+
+	const Vector& projOrigin = UtilHelpers::getEntityOrigin(projectile);
+	const float dist = (bot->WorldSpaceCenter() - projOrigin).Length();
+
+	Vector velocity{ 0.0f, 0.0f, 0.0f };
+	entityprops::GetEntityAbsVelocity(projectile, velocity);
+	const float blastradius = GetModSettings()->GetDefaultBlastRadius();
+
+	// projectile is either not moving or the velocity isn't stored in CBaseEntity::m_vecAbsVelocity
+	if (velocity.IsZero(1.0f))
+	{
+		if (bot->GetRangeTo(projOrigin) <= blastradius)
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	const float gravity = UtilHelpers::GetEntityGravity(UtilHelpers::IndexOfEntity(projectile));
+
+	// no gravity, assume it moves straigh in a constant speed
+	if (gravity <= 0.01f)
+	{
+		hitPos = pred::PredictStraightProjectileHitPosition(projectile, MASK_SOLID);
+	}
+	else
+	{
+		// Stop prediction when the projectile hits ground.
+		// The physics sim isn't that good when things are on ground and this should be good enough for explode on contact projectiles.
+		hitPos = pred::PredictBallisticProjectileHitPosition(projectile, MASK_SOLID, 1.0f, true);
+	}
+
+	if (bot->GetRangeTo(hitPos) <= blastradius)
+	{
+		return true;
+	}
+
+	return false;
+}
+
 void CBaseMod::InternalFindPlayerResourceEntity()
 {
 	SourceMod::IGameConfig* gamedata = nullptr;
 	m_playerresourceentity.Term();
 	
-	constexpr auto maxlength = 256U;
+	constexpr std::size_t maxlength = 256U;
 	char error[maxlength];
 
 	if (!gameconfs->LoadGameConfigFile("sdktools.games", &gamedata, error, maxlength))
 	{
 		smutils->LogError(myself, "Failed to load SDK Tools gamedata file! error: \"%s\".", error);
-		gameconfs->CloseGameConfigFile(gamedata);
 		return;
 	}
 

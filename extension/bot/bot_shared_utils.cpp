@@ -234,7 +234,7 @@ void botsharedutils::RandomSnipingSpotCollector::OnDone()
 }
 
 botsharedutils::FindCoverCollector::FindCoverCollector(const Vector& fromSpot, const float radius, const bool checkLOS, const bool checkCorners, const float maxSearchRange, CBaseBot* bot) :
-	m_vecOffset(0.0f, 0.0f, 32.0f)
+	m_vecOffset(0.0f, 0.0f, navgenparams->human_eye_height)
 {
 	m_coverFrom = fromSpot;
 	m_minDistance = radius;
@@ -251,7 +251,7 @@ botsharedutils::FindCoverCollector::FindCoverCollector(const Vector& fromSpot, c
 }
 
 botsharedutils::FindCoverCollector::FindCoverCollector(const Vector& fromSpot, const float radius, const bool checkLOS, const bool checkCorners, const float maxSearchRange, const Vector& origin) :
-	m_vecOffset(0.0f, 0.0f, 32.0f)
+	m_vecOffset(0.0f, 0.0f, navgenparams->human_eye_height)
 {
 	m_coverFrom = fromSpot;
 	m_minDistance = radius;

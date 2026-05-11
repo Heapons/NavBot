@@ -1,6 +1,5 @@
 "Games"
 {
-	
 	"#default"
 	{
 		"Keys"
@@ -79,6 +78,12 @@
 
 			/* Player model bone name to aim at when going for headshots */
 			"BotAim_HeadBoneName"			"ValveBiped.Bip01_Head1"
+
+			/* Combat Interface Danger Scan Values */
+
+			"ICombat_AllowDangerScan" "true" // boolean, is danger scan allowed for this game/mod?
+			"ICombat_DoTeamChecks" "true" // boolean, if enabled, projectiles from the same team as the bot are ignored.
+			"ICombat_DangerEnts" "" // comma delimited list of entity classname that are considered a danger source. Default is empty.
 		}
 		"Offsets"
 		{

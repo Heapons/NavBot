@@ -7,6 +7,7 @@
 #include <bot/tasks_shared/bot_shared_prereq_move_to_pos.h>
 #include <bot/tasks_shared/bot_shared_prereq_use_ent.h>
 #include <bot/tasks_shared/bot_shared_prereq_wait.h>
+#include <bot/tasks_shared/bot_shared_take_cover_from_danger.h>
 #include <bot/interfaces/behavior_utils.h>
 #include "dodsbot_scenario_monitor_task.h"
 #include "dodsbot_tactical_monitor_task.h"
@@ -48,4 +49,11 @@ TaskEventResponseResult<CDoDSBot> CDoDSBotTacticalMonitorTask::OnInjured(CDoDSBo
 	}
 
 	return TryContinue(PRIORITY_LOW);
+}
+
+TaskEventResponseResult<CDoDSBot> CDoDSBotTacticalMonitorTask::OnDangerousEntityChanged(CDoDSBot* bot, CBaseEntity* newent, CBaseEntity* oldent)
+{
+	BOTVEHAVIOR_IMPLEMENT_SIMPLE_DANGER_COVER(CDoDSBot, CDoDSBotPathCost);
+
+	return TryContinue(PRIORITY_DONT_CARE);
 }

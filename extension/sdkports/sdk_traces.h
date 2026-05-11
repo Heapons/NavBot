@@ -193,6 +193,49 @@ namespace trace
 		ITraceFilter* m_pFilter2;
 	};
 
+	/**
+	 * @brief A trace filter that doesn't collide with any entity that derives from CBaseCombatCharacter
+	 */
+	class CTraceFilterIgnoreCombatChars : public CTraceFilterSimple
+	{
+	public:
+		CTraceFilterIgnoreCombatChars() :
+			CTraceFilterSimple(nullptr, COLLISION_GROUP_NONE)
+		{
+		}
+		CTraceFilterIgnoreCombatChars(CBaseEntity* passEntity, int collisionGroup) :
+			CTraceFilterSimple(passEntity, collisionGroup)
+		{
+		}
+
+		bool ShouldHitEntity(IHandleEntity* pHandleEntity, int contentsMask) override;
+	};
+
+	class CTraceFilterTeam : public CTraceFilterSimple
+	{
+	public:
+		/**
+		 * @brief Constructor.
+		 * @param teamNum Team to filter.
+		 * @param hit If true, the filter will hit entities of the given team, else it will pass and hit entities of other teams.
+		 * @param entity Optional entity to pass.
+		 * @param collisiongroup Optional collision group. COLLISION_GROUP_NONE is the default.
+		 */
+		CTraceFilterTeam(int teamNum, bool hit, CBaseEntity* entity = nullptr, int collisiongroup = COLLISION_GROUP_NONE) :
+			CTraceFilterSimple(entity, collisiongroup), m_teamNum(teamNum), m_isHit(hit)
+		{
+		}
+
+		static constexpr bool HIT_THIS_TEAM = true; // for the constructor bool param, trace will be solid for the given team.
+		static constexpr bool HIT_OTHER_TEAMS = false; // for the constructor bool param, trace will be solid for other teams.
+
+		bool ShouldHitEntity(IHandleEntity* pHandleEntity, int contentsMask) override;
+
+	private:
+		int m_teamNum;
+		bool m_isHit;
+	};
+
 	inline void line(const Vector& start, const Vector& end, unsigned int mask, trace_t& result)
 	{
 		Ray_t ray;

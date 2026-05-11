@@ -35,6 +35,8 @@ void DifficultyProfile::RandomizeProfileValues()
 	health_low_percent = randomgen->GetRandomReal<float>(0.4f, 0.8f);
 	numerical_disadvantage_retreat_threshold = randomgen->GetRandomInt<int>(3, 12);
 	prediction_max_iterations = randomgen->GetRandomInt<int>(1, 10);
+	danger_scan_interval = randomgen->GetRandomReal<float>(0.25f, 5.0f);
+	danger_scan_size = randomgen->GetRandomReal<float>(64.0f, 256.0f);
 }
 
 void DifficultyProfile::ValidateProfileValues()
@@ -211,7 +213,7 @@ SourceMod::SMCResult CDifficultyManager::ReadSMC_NewSection(const SourceMod::SMC
 	if (strncmp(name, "BotDifficultyProfiles", 21) == 0)
 	{
 		m_parser_depth++;
-		return SMCResult_Continue;
+		return SourceMod::SMCResult::SMCResult_Continue;
 	}
 
 	if (m_parser_depth == 1)
@@ -224,7 +226,7 @@ SourceMod::SMCResult CDifficultyManager::ReadSMC_NewSection(const SourceMod::SMC
 	if (m_parser_depth == 2)
 	{
 		smutils->LogError(myself, "Unexpected section %s at L %i C %i", name, states->line, states->col);
-		return SMCResult_HaltFail;
+		return SourceMod::SMCResult::SMCResult_HaltFail;
 	}
 
 	// max depth should be 2
@@ -232,11 +234,11 @@ SourceMod::SMCResult CDifficultyManager::ReadSMC_NewSection(const SourceMod::SMC
 	if (m_parser_depth > 2)
 	{
 		smutils->LogError(myself, "Unexpected section %s at L %i C %i", name, states->line, states->col);
-		return SMCResult_HaltFail;
+		return SourceMod::SMCResult::SMCResult_HaltFail;
 	}
 
 	m_parser_depth++;
-	return SMCResult_Continue;
+	return SourceMod::SMCResult::SMCResult_Continue;
 }
 
 SourceMod::SMCResult CDifficultyManager::ReadSMC_KeyValue(const SourceMod::SMCStates* states, const char* key, const char* value)
@@ -393,12 +395,20 @@ SourceMod::SMCResult CDifficultyManager::ReadSMC_KeyValue(const SourceMod::SMCSt
 		v = std::clamp(v, 1, 30);
 		m_current->SetMaxPredictionIterations(v);
 	}
+	else if (strncasecmp(key, "danger_scan_interval", 20) == 0)
+	{
+		m_current->SetDangerScanFrequency(std::clamp(std::stof(value), -1.0f, 5.0f));
+	}
+	else if (strncasecmp(key, "danger_scan_size", 16) == 0)
+	{
+		m_current->SetDangerScanSize(std::clamp(std::stof(value), 64.0f, 2048.0f));
+	}
 	else
 	{
 		smutils->LogError(myself, "Unknown key \"%s\" with value \"%s\" found while parsing bot difficulty profile!", key, value);
 	}
 
-	return SMCResult_Continue;
+	return SourceMod::SMCResult::SMCResult_Continue;
 }
 
 SourceMod::SMCResult CDifficultyManager::ReadSMC_LeavingSection(const SourceMod::SMCStates* states)
@@ -409,5 +419,5 @@ SourceMod::SMCResult CDifficultyManager::ReadSMC_LeavingSection(const SourceMod:
 	}
 
 	m_parser_depth--;
-	return SMCResult_Continue;
+	return SourceMod::SMCResult::SMCResult_Continue;
 }

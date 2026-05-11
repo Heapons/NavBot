@@ -31,6 +31,9 @@
 			"PlayerHull_CrouchHeight"		"45.0"
 			"PlayerHull_ProneHeight"		"24.0"
 			"PlayerHull_Width"				"32.0"
+
+			"ICombat_DoTeamChecks" "false"
+			"ICombat_DangerEnts" "grenade_frag_ger,grenade_frag_us,grenade_riflegren_ger,grenade_riflegren_us"
 		}
 		"Offsets"
 		{

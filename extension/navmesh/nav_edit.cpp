@@ -526,6 +526,8 @@ void CNavMesh::CommandNavBuildLadder( void )
 		return;
 	}
 
+	NotifyDangerousEditCommandWasUsed();
+
 	// We've got a ladder at m_editCursorPos, with a normal of m_surfaceNormal
 	Vector right, up;
 	VectorVectors( -m_surfaceNormal, right, up );
@@ -1216,6 +1218,8 @@ void CNavMesh::CommandNavDelete( void )
 	if (player == NULL || !IsEditMode( NORMAL ) )
 		return;
 
+	NotifyDangerousEditCommandWasUsed();
+
 	if (IsSelectedSetEmpty())
 	{
 		// the old way
@@ -1317,6 +1321,8 @@ void CNavMesh::CommandNavDeleteMarked( void )
 	edict_t *player = UTIL_GetListenServerEnt();
 	if (player == NULL || !IsEditMode( NORMAL ) )
 		return; 
+
+	NotifyDangerousEditCommandWasUsed();
 
 	CNavArea *markedArea = GetMarkedArea(); 
 	if( markedArea ) 
@@ -2421,6 +2427,7 @@ void CNavMesh::CommandNavSplit( void )
 	if (player == NULL || !IsEditMode( NORMAL ) )
 		return;
 
+	NotifyDangerousEditCommandWasUsed();
 	FindActiveNavArea();
 
 	if ( m_selectedArea )
@@ -2525,6 +2532,7 @@ void CNavMesh::CommandNavMerge( void )
 	if (player == NULL || !IsEditMode( NORMAL ) )
 		return;
 
+	NotifyDangerousEditCommandWasUsed();
 	FindActiveNavArea();
 
 	if ( m_selectedArea )
@@ -2692,6 +2700,8 @@ void CNavMesh::CommandNavBeginArea( void )
 	edict_t* player = UTIL_GetListenServerEnt();
 	if (player == NULL)
 		return;
+
+	NotifyDangerousEditCommandWasUsed();
 
 	if ( !(IsEditMode( CREATING_AREA ) || IsEditMode( CREATING_LADDER ) || IsEditMode( NORMAL )) )
 	{
@@ -2877,6 +2887,7 @@ void CNavMesh::CommandNavConnect( void )
 	if (player == NULL || !IsEditMode( NORMAL ) )
 		return;
 
+	NotifyDangerousEditCommandWasUsed();
 	FindActiveNavArea();
 
 	Vector center;
@@ -2993,6 +3004,7 @@ void CNavMesh::CommandNavDisconnect( void )
 	if (player == NULL || !IsEditMode( NORMAL ) )
 		return;
 
+	NotifyDangerousEditCommandWasUsed();
 	FindActiveNavArea();
 
 	if ( m_selectedSet.Count() > 1 )
@@ -3088,6 +3100,8 @@ void CNavMesh::CommandNavDisconnectOutgoingOneWays( void )
 	if ( !player || !IsEditMode( NORMAL ) )
 		return;
 
+	NotifyDangerousEditCommandWasUsed();
+
 	if ( m_selectedSet.Count() == 0 )
 	{
 		FindActiveNavArea();
@@ -3133,6 +3147,7 @@ void CNavMesh::CommandNavSplice( void )
 	if (player == NULL || !IsEditMode( NORMAL ) )
 		return;
 
+	NotifyDangerousEditCommandWasUsed();
 	FindActiveNavArea();
 
 	if ( m_selectedArea )
@@ -3784,12 +3799,12 @@ void CNavMesh::CommandNavConnectViaOffMeshLink(std::uint32_t linktype)
 	if (ent == nullptr || !IsEditMode(NORMAL))
 		return;
 
+	NotifyDangerousEditCommandWasUsed();
+
 	/**
 	 * Creates a special link between two areas
 	 * 
 	*/
-
-	CBaseExtPlayer player(ent);
 
 	if (m_markedArea == nullptr)
 	{
@@ -3797,8 +3812,6 @@ void CNavMesh::CommandNavConnectViaOffMeshLink(std::uint32_t linktype)
 		PlayEditSound(EditSoundType::SOUND_CONNECT_FAIL);
 		return;
 	}
-
-	player.UpdateLastKnownNavArea(true);
 
 	CNavArea* startArea = m_markedArea;
 	FindActiveNavArea();
@@ -3810,6 +3823,7 @@ void CNavMesh::CommandNavConnectViaOffMeshLink(std::uint32_t linktype)
 		return;
 	}
 
+	CBaseExtPlayer player(ent);
 	CNavArea* endArea = m_selectedArea;
 	Vector linkEnd = player.GetAbsOrigin();
 
@@ -3866,6 +3880,7 @@ void CNavMesh::CommandNavDisconnectOffMeshLink(uint32_t linktype)
 	if (player == NULL || !IsEditMode(NORMAL))
 		return;
 
+	NotifyDangerousEditCommandWasUsed();
 	FindActiveNavArea();
 
 	if (m_selectedSet.Count() > 1)
@@ -4953,6 +4968,7 @@ CON_COMMAND_F(sm_nav_select_potentially_obstructed_areas, "Selects nav areas tha
 
 void CNavMesh::CommandNavDisconnectDropDownAreas(const float minDrop)
 {
+	NotifyDangerousEditCommandWasUsed();
 	std::size_t count = 0U;
 
 	FOR_EACH_VEC(m_selectedSet, it)
@@ -5032,7 +5048,7 @@ CON_COMMAND_F(sm_nav_auto_create_teleports, "Automatically creates off-mesh conn
 
 			if (!startArea)
 			{
-				META_CONPRINTF("Skipping entity #%i at %g %g %g : NULL nearest nav area (start)! \n", index, ground.x, ground.y, ground.z);
+				META_CONPRINTF("Skipping entity #s at %g %g %g : NULL nearest nav area (start)! \n", UtilHelpers::textformat::FormatEntity(entity), ground.x, ground.y, ground.z);
 				return true;
 			}
 
@@ -5041,7 +5057,7 @@ CON_COMMAND_F(sm_nav_auto_create_teleports, "Automatically creates off-mesh conn
 
 			if (!entprops->GetEntPropString(index, Prop_Data, "m_target", targetname, sizeof(targetname), length) || length < 1)
 			{
-				META_CONPRINTF("Skipping entity #%i : No targetname set! \n", index);
+				META_CONPRINTF("Skipping entity #%s : No targetname set! \n", UtilHelpers::textformat::FormatEntity(entity));
 				return true;
 			}
 
@@ -5049,7 +5065,7 @@ CON_COMMAND_F(sm_nav_auto_create_teleports, "Automatically creates off-mesh conn
 
 			if (iTarget == INVALID_EHANDLE_INDEX)
 			{
-				META_CONPRINTF("Skipping entity #%i : NULL m_target ent! (%s)\n", index, targetname);
+				META_CONPRINTF("Skipping entity #%s : NULL m_target ent! (%s)\n", UtilHelpers::textformat::FormatEntity(entity), targetname);
 				return true;
 			}
 
@@ -5066,7 +5082,8 @@ CON_COMMAND_F(sm_nav_auto_create_teleports, "Automatically creates off-mesh conn
 
 			if (!endArea)
 			{
-				META_CONPRINTF("Skipping entity #%i at %g %g %g : NULL nearest nav area (end)! \n", index, destination.x, destination.y, destination.z);
+				META_CONPRINTF("Skipping entity #s at %g %g %g : NULL nearest nav area (end)! \n", 
+					UtilHelpers::textformat::FormatEntity(entity), destination.x, destination.y, destination.z);
 				return true;
 			}
 
@@ -5086,6 +5103,7 @@ CON_COMMAND_F(sm_nav_auto_create_teleports, "Automatically creates off-mesh conn
 	META_CONPRINTF("Created %i teleporter connections. \n", created);
 	TheNavMesh->ClearSelectedSet();
 	TheNavMesh->SetMarkedArea(nullptr);
+	TheNavMesh->NotifyDangerousEditCommandWasUsed();
 	TheNavMesh->PlayEditSound(CNavMesh::EditSoundType::SOUND_GENERIC_SUCCESS);
 }
 

@@ -18,6 +18,7 @@
 #include <bot/tasks_shared/bot_shared_prereq_wait.h>
 #include <bot/tasks_shared/bot_shared_retreat_from_threat.h>
 #include <bot/tasks_shared/bot_shared_escort_entity.h>
+#include <bot/tasks_shared/bot_shared_take_cover_from_danger.h>
 #include "tf2bot_scenario_task.h"
 
 #undef max
@@ -204,6 +205,13 @@ TaskEventResponseResult<CTF2Bot> CTF2BotTacticalTask::OnObjectSapped(CTF2Bot* bo
 
 		bot->GetSpyMonitorInterface()->DetectSpy(saboteur);
 	}
+
+	return TryContinue(PRIORITY_DONT_CARE);
+}
+
+TaskEventResponseResult<CTF2Bot> CTF2BotTacticalTask::OnDangerousEntityChanged(CTF2Bot* bot, CBaseEntity* newent, CBaseEntity* oldent)
+{
+	BOTVEHAVIOR_IMPLEMENT_SIMPLE_DANGER_COVER(CTF2Bot, CTF2BotPathCost);
 
 	return TryContinue(PRIORITY_DONT_CARE);
 }

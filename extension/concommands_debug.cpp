@@ -16,6 +16,7 @@
 #include <sdkports/sdk_game_util.h>
 #include <sdkports/sdk_entityoutput.h>
 #include <util/ehandle_edict.h>
+#include <util/prediction.h>
 #include <sm_argbuffer.h>
 #include <am-platform.h>
 
@@ -325,6 +326,49 @@ CON_COMMAND(sm_navbot_debug_bot_select_weapon, "Tests weapon selection.")
 	{
 		META_CONPRINTF("Unknown equip method! %s\n", szMethod);
 	}
+}
+
+CON_COMMAND(sm_navbot_debug_bot_override_prim_threat, "Overrides the bot's primary threat.")
+{
+	DECLARE_COMMAND_ARGS;
+
+	if (args.ArgC() < 2)
+	{
+		META_CONPRINT("[SM] Usage: sm_navbot_debug_bot_override_prim_threat <ent index> \n -- Pass -1 to clear it. \n");
+		return;
+	}
+
+	int index = INVALID_EHANDLE_INDEX;
+
+	try
+	{
+		index = std::stoi(args[1]);
+	}
+	catch (const std::exception& ex)
+	{
+		META_CONPRINTF("FATAL ERROR: %s! \n", ex.what());
+		return;
+	}
+
+	CBaseEntity* pEntity = nullptr;
+
+	if (index != INVALID_EHANDLE_INDEX)
+	{
+		pEntity = gamehelpers->ReferenceToEntity(index);
+
+		if (!pEntity)
+		{
+			META_CONPRINTF("ERROR: NULL entity of index \"%i\"! \n", index);
+			return;
+		}
+	}
+
+	auto func = [pEntity](CBaseBot* bot) {
+		bot->GetSensorInterface()->SetPrimaryThreatOverride(pEntity);
+	};
+
+	extmanager->ForEachBot(func);
+	META_CONPRINTF("Primary threat override set to %s \n", UtilHelpers::textformat::FormatEntity(pEntity));
 }
 
 CON_COMMAND(sm_navbot_debug_bot_dump_current_path, "Dumps the current bot path to the console.")
@@ -2140,7 +2184,7 @@ CON_COMMAND_F(sm_navbot_debug_find_offs, "Debug find offset without inheritance.
 
 	if (args.ArgC() < 3)
 	{
-		META_CONPRINTF("sm_navbot_debug_find_offs <server class> <prop name>\n");
+		META_CONPRINTF("[SM] Usage: sm_navbot_debug_find_offs <server class> <prop name>\n");
 		return;
 	}
 
@@ -2157,6 +2201,75 @@ CON_COMMAND_F(sm_navbot_debug_find_offs, "Debug find offset without inheritance.
 	{
 		META_CONPRINTF("%s is not a member of %s!\n", prop, name);
 	}
+}
+
+CON_COMMAND_F(sm_navbot_debug_engine_pred, "Predicts entity movement using QPHYSICS.", FCVAR_CHEAT | FCVAR_GAMEDLL)
+{
+	DECLARE_COMMAND_ARGS;
+
+	if (args.ArgC() < 3)
+	{
+		META_CONPRINTF("[SM] Usage: sm_navbot_debug_engine_pred <options>\n");
+		META_CONPRINTF(" options: -ent <index> -classname <classname> -time <time in seconds> \n");
+		return;
+	}
+
+	CBaseEntity* pEntity = nullptr;
+
+	int index = args.FindArgInt("-ent", INVALID_EHANDLE_INDEX);
+
+	if (index != INVALID_EHANDLE_INDEX)
+	{
+		pEntity = gamehelpers->ReferenceToEntity(index);
+
+		if (!pEntity)
+		{
+			META_CONPRINTF("No entity of index \"%i\" found! \n", index);
+		}
+	}
+
+	const char* classname = args.FindArg("-classname");
+
+	if (classname && classname[0] != '\0')
+	{
+		index = UtilHelpers::FindEntityByClassname(INVALID_EHANDLE_INDEX, classname);
+		pEntity = gamehelpers->ReferenceToEntity(index);
+
+		if (!pEntity)
+		{
+			META_CONPRINTF("No entity of classname \"%s\" found! \n", classname);
+		}
+	}
+
+	if (!pEntity)
+	{
+		return;
+	}
+
+	const char* sztime = args.FindArg("-time");
+	float time = 1.0f;
+
+	if (sztime && sztime[0] != '\0')
+	{
+		try
+		{
+			time = std::stof(sztime);
+		}
+		catch (const std::exception& ex)
+		{
+			META_CONPRINTF("FATAL ERROR: Failed to read \"-time\"! Error: %s \n", ex.what());
+			return;
+		}
+
+		time = std::clamp(time, 0.1f, 10.0f);
+	}
+
+	pred::CEnginePrediction enginepred;
+	enginepred.SetTraceMask(MASK_SOLID);
+	enginepred.PredictEntity(pEntity, time);
+	NDebugOverlay::Box(enginepred.GetPredictionData().pos, enginepred.GetPredictionData().mins, enginepred.GetPredictionData().maxs, 255, 0, 0, 127, 10.0f);
+	META_CONPRINTF("Prediction of entity %s done. Final pos: %s \n", 
+		UtilHelpers::textformat::FormatEntity(pEntity), UtilHelpers::textformat::FormatVector(enginepred.GetPredictionData().pos));
 }
 
 #endif // EXT_DEBUG

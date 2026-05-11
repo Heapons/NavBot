@@ -23,6 +23,7 @@ folder_list = [
   'addons/sourcemod/configs/navbot/cstrike',
   'addons/sourcemod/data/',
   'addons/sourcemod/data/navbot',
+  'addons/sourcemod/data/navbot/cstrike',
 ]
 
 if 'x86_64' in Extension.target_archs:
@@ -144,6 +145,12 @@ CopyFiles('configs/cstrike', 'addons/sourcemod/configs/navbot/cstrike',
 )
 
 CopyFiles('data', 'addons/sourcemod/data/navbot',
+  [ 
+    'nav_places.cfg'
+  ]
+)
+
+CopyFiles('data/cstrike', 'addons/sourcemod/data/navbot/cstrike',
   [ 
     'nav_places.cfg'
   ]

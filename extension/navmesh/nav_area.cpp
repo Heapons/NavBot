@@ -1441,12 +1441,12 @@ void CNavArea::FinishSplitEdit( CNavArea *newArea, NavDirType ignoreEdge )
 			break;
 		}
 
-		while ( !newArea->IsOverlapping( *newArea->m_node[ corner[0] ]->GetPosition(), navgenparams->generation_step_size/2 ) )
+		while ( !newArea->IsOverlapping( *newArea->m_node[ corner[0] ]->GetPosition(), navgenparams->generation_step_size / 2.0f ) )
 		{
 			for ( int i=0; i<2; ++i )
 			{
-				Assert( newArea->m_node[ corner[i] ] );
-				Assert( newArea->m_node[ corner[i] ]->GetConnectedNode( dir ) );
+				EXT_ASSERT( newArea->m_node[ corner[i] ], "newArea->m_node[ corner[i] ] is NULL!" );
+				EXT_ASSERT( newArea->m_node[ corner[i] ]->GetConnectedNode( dir ), "NULL GetConnectedNode! ");
 				newArea->m_node[ corner[i] ] = newArea->m_node[ corner[i] ]->GetConnectedNode( dir );
 			}
 		}
@@ -1550,8 +1550,8 @@ bool CNavArea::SpliceEdit( CNavArea *other )
 		if (m_nwCorner.y > other->m_seCorner.y)
 		{
 			// 'this' is south of 'other'
-			float left = MAX( m_nwCorner.x, other->m_nwCorner.x );
-			float right = MIN( m_seCorner.x, other->m_seCorner.x );
+			float left = std::max( m_nwCorner.x, other->m_nwCorner.x );
+			float right = std::min( m_seCorner.x, other->m_seCorner.x );
 
 			nw.x = left;
 			nw.y = other->m_seCorner.y;
@@ -1570,9 +1570,10 @@ bool CNavArea::SpliceEdit( CNavArea *other )
 			sw.z = GetZ( sw );
 
 			newArea = TheNavMesh->CreateArea();
+
 			if (newArea == NULL)
 			{
-				Warning( "SpliceEdit: Out of memory.\n" );
+				smutils->LogError(myself, "SpliceEdit: Out of memory!" );
 				return false;
 			}
 			
@@ -1587,8 +1588,8 @@ bool CNavArea::SpliceEdit( CNavArea *other )
 		else if (m_seCorner.y < other->m_nwCorner.y)
 		{
 			// 'this' is north of 'other'
-			float left = MAX( m_nwCorner.x, other->m_nwCorner.x );
-			float right = MIN( m_seCorner.x, other->m_seCorner.x );
+			float left = std::max( m_nwCorner.x, other->m_nwCorner.x );
+			float right = std::min( m_seCorner.x, other->m_seCorner.x );
 
 			nw.x = left;
 			nw.y = m_seCorner.y;
@@ -1607,9 +1608,10 @@ bool CNavArea::SpliceEdit( CNavArea *other )
 			sw.z = other->GetZ( sw );
 
 			newArea = TheNavMesh->CreateArea();
+
 			if (newArea == NULL)
 			{
-				Warning( "SpliceEdit: Out of memory.\n" );
+				smutils->LogError(myself, "SpliceEdit: Out of memory!");
 				return false;
 			}
 			
@@ -1790,8 +1792,8 @@ bool CNavArea::IsRoughlySquare( void ) const
 {
 	float aspect = GetSizeX() / GetSizeY();
 
-	const float maxAspect = 3.01;
-	const float minAspect = 1.0f / maxAspect;
+	constexpr float maxAspect = 3.01f;
+	constexpr float minAspect = 1.0f / maxAspect;
 	if (aspect < minAspect || aspect > maxAspect)
 		return false;
 
@@ -3583,7 +3585,7 @@ bool CNavArea::IsPartiallyVisible(const CNavArea* other, const bool checkPVS) co
 	Vector start = GetCenter() + offset;
 	Vector end = other->GetCenter() + offset;
 
-	CTraceFilterWorldAndPropsOnly filter;
+	trace::CTraceFilterIgnoreCombatChars filter;
 	trace_t tr;
 	trace::line(start, end, MASK_VISIBLE, &filter, tr);
 
@@ -3630,7 +3632,7 @@ bool CNavArea::IsCompletelyVisible(const CNavArea* other, const bool checkPVS) c
 	Vector start = GetCenter() + offset;
 	Vector end = other->GetCenter() + offset;
 
-	CTraceFilterWorldAndPropsOnly filter;
+	trace::CTraceFilterIgnoreCombatChars filter;
 	trace_t tr;
 	trace::line(start, end, MASK_VISIBLE, &filter, tr);
 

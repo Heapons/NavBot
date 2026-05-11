@@ -11,6 +11,7 @@ public:
 	static AITask<CTF2Bot>* SelectScenarioTask(CTF2Bot* me, const bool skipClassBehavior = false);
 	static AITask<CTF2Bot>* SelectClassTask(CTF2Bot* me);
 
+	TaskEventResponseResult<CTF2Bot> OnSight(CTF2Bot* bot, CBaseEntity* subject) override;
 	TaskEventResponseResult<CTF2Bot> OnVoiceCommand(CTF2Bot* bot, CBaseEntity* subject, int command) override;
 	TaskEventResponseResult<CTF2Bot> OnTruceChanged(CTF2Bot* bot, const bool enabled) override;
 	TaskEventResponseResult<CTF2Bot> OnObjectSapped(CTF2Bot* bot, CBaseEntity* owner, CBaseEntity* saboteur) override;

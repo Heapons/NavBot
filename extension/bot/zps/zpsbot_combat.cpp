@@ -60,10 +60,17 @@ void CZPSBotCombat::Reset()
 bool CZPSBotCombat::IsAbleToDodgeEnemies(const CKnownEntity* threat, const CBotWeapon* activeWeapon)
 {
 	CZPSBot* bot = GetBot<CZPSBot>();
+	const bool baseResult = ICombat::IsAbleToDodgeEnemies(threat, activeWeapon);
 
 	if (bot->GetMyZPSTeam() == zps::ZPSTeam::ZPS_TEAM_ZOMBIES)
 	{
-		return ICombat::IsAbleToDodgeEnemies(threat, activeWeapon);
+		// zombies only use base
+		return baseResult;
+	}
+
+	if (!baseResult)
+	{
+		return false;
 	}
 
 	// Survivors only dodges if zombies are close

@@ -183,6 +183,26 @@ public:
 	inline int GetKnownAllyCount() const { return m_statsknownallies; }
 	// Shares known entity information another sensor interface
 	void ShareKnownEntityList(ISensor* other);
+	/**
+	 * @brief Sets the primary threat override.
+	 * @param threat Entity to set as the primary threat override. Passing NULL clears the override.
+	 */
+	void SetPrimaryThreatOverride(CBaseEntity* threat)
+	{
+		if (!threat)
+		{
+			m_primarythreatoverride.reset(nullptr);
+			return;
+		}
+
+		m_primarythreatoverride = std::make_unique<CKnownEntity>(threat);
+
+		if (IsAbleToSee(threat))
+		{
+			m_primarythreatoverride->MarkAsFullyVisible();
+			m_primarythreatoverride->MarkLastKnownPositionAsSeen();
+		}
+	}
 protected:
 	/**
 	 * @brief Called to update the list of known entities.
@@ -222,9 +242,12 @@ protected:
 	virtual void UpdateSharedKnowns();
 
 	void UpdateStatistics();
+	// Gets the known entity instance of the primary theat override. NULL if none.
+	CKnownEntity* GetPrimaryThreatOverride() const { return m_primarythreatoverride.get(); }
 private:
 	std::vector<CKnownEntity> m_knownlist;
 	const CKnownEntity* m_primarythreatcache;
+	std::unique_ptr<CKnownEntity> m_primarythreatoverride;
 	CountdownTimer m_updateNonPlayerTimer;
 	CountdownTimer m_updateStatisticsTimer;
 	CountdownTimer m_shareKnownsTimer; // timer for sharing and updating the known list
@@ -240,6 +263,8 @@ private:
 	int m_statsvisibleenemies;
 	int m_statsknownallies; // total number of known allies (visible or not)
 };
+
+#include "sensor_utils.h"
 
 #endif // !NAVBOT_SENSOR_INTERFACE_H_
 

@@ -10,6 +10,9 @@
 			"NavGenerationWalkableEntsCenter"	"func_buyzone,func_bomb_target,func_hostage_rescue"
 			/* Comma delimited list of client command the bot should send to join the game. */
 			"BotJoinGameCommand"			"joingame,jointeam 0,joinclass 0"
+
+			"ICombat_DoTeamChecks" "false"
+			"ICombat_DangerEnts" "flashbang_projectile,hegrenade_projectile"
 		}
 		"Offsets"
 		{

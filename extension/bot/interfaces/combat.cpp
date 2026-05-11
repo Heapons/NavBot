@@ -1,6 +1,7 @@
 #include NAVBOT_PCH_FILE
 #include <string_view>
 #include <extension.h>
+#include <mods/modhelpers.h>
 #include <navmesh/nav_mesh.h>
 #include <bot/basebot.h>
 #include "combat.h"
@@ -36,6 +37,7 @@ void ICombat::Reset()
 	m_isScopedOrDeployed = false;
 	m_reAim = false;
 	m_lastPlace = static_cast<unsigned int>(UNDEFINED_PLACE);
+	m_dangerScanTimer.Invalidate();
 	m_disableCombatTimer.Invalidate();
 	m_dontFireTimer.Invalidate();
 	m_unscopeTimer.Invalidate();
@@ -51,6 +53,7 @@ void ICombat::Reset()
 	m_attackTimer.Invalidate();
 	m_lookAroundTimer.Start(LOOK_AROUND_TIMER_BASE_MAX);
 	m_combatData.Clear();
+	m_lastDangerEntity.Term();
 }
 
 void ICombat::Update()
@@ -144,6 +147,8 @@ void ICombat::Update()
 			OnPostCombat();
 		}
 	}
+
+	DangerScanUpdate();
 }
 
 void ICombat::Frame()
@@ -239,6 +244,51 @@ const bool ICombat::CanLookAround() const
 	}
 
 	return m_disableLookingAroundTimer.IsElapsed();
+}
+
+bool ICombat::DangerScanParseGamedata()
+{
+	SourceMod::IGameConfig* gcfg = extension->GetExtensionGameData();
+
+	const char* value = gcfg->GetKeyValue("ICombat_AllowDangerScan");
+
+	// outdated gamedata file
+	if (!value)
+	{
+		return false;
+	}
+
+	ICombat::s_allowDangerScan = UtilHelpers::StringToBoolean(value);
+
+	value = gcfg->GetKeyValue("ICombat_DoTeamChecks");
+
+	// outdated gamedata file
+	if (!value)
+	{
+		return false;
+	}
+
+	ICombat::s_dangerCheckTeam = UtilHelpers::StringToBoolean(value);
+
+	value = gcfg->GetKeyValue("ICombat_DangerEnts");
+
+	if (value && std::strlen(value) > 3) /* the danger entity list is optional */
+	{
+		std::string strvalue(value);
+		std::stringstream stream(strvalue);
+		std::string token;
+
+		while (std::getline(stream, token, ','))
+		{
+			ICombat::s_dangerEnts.emplace(token);
+		}
+	}
+
+#ifdef EXT_DEBUG
+	META_CONPRINTF("[NavBot] Danger Scan enabled: %s. Number of Ents: %zu \n", UtilHelpers::textformat::FormatBool(ICombat::s_allowDangerScan), ICombat::s_dangerEnts.size());
+#endif // EXT_DEBUG
+
+	return true;
 }
 
 void ICombat::OnLastUsedWeaponChanged(CBaseEntity* newWeapon)
@@ -832,6 +882,81 @@ void ICombat::OnPostCombat()
 	}
 }
 
+bool ICombat::CanScanForDanger() const
+{
+	if (!ICombat::s_allowDangerScan) { return false; }
+
+	if (!GetBot<CBaseBot>()->GetDifficultyProfile()->IsAllowedToScanForDanger()) { return false; }
+
+	if (!m_dangerScanTimer.IsElapsed()) { return false; }
+
+	return true;
+}
+
+bool ICombat::IsEntityADangerSource(CBaseEntity* entity) const
+{
+#ifdef EXT_VPROF_ENABLED
+	VPROF_BUDGET("ICombat::IsEntityADangerSource", "NavBot");
+#endif // EXT_VPROF_ENABLED
+
+	const char* classname = gamehelpers->GetEntityClassname(entity);
+
+	// not on the list, not a danger
+	if (ICombat::s_dangerEnts.find(classname) == ICombat::s_dangerEnts.cend())
+	{
+		return false;
+	}
+
+	if (ICombat::IsDangerScanTeamCheckEnabled())
+	{
+		// ignore entities from the same team
+		if (GetBot<CBaseBot>()->GetCurrentTeamIndex() == modhelpers->GetEntityTeamNumber(entity))
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool ICombat::IsAwareOfDangerEntity(CBaseEntity* entity) const
+{
+#ifdef EXT_VPROF_ENABLED
+	VPROF_BUDGET("ICombat::IsAwareOfDangerEntity", "NavBot");
+#endif // EXT_VPROF_ENABLED
+
+	CBaseBot* bot = GetBot<CBaseBot>();
+	ISensor* sensor = bot->GetSensorInterface();
+	Vector center = UtilHelpers::getWorldSpaceCenter(entity);
+
+	// something is obstructing my view of this entity.
+	if (!sensor->IsLineOfSightClear(center))
+	{
+		return false;
+	}
+
+	// entity is not in my field of view (very high skill bots ignores this check).
+	if (bot->GetDifficultyProfile()->GetGameAwareness() < ICombat::DANGER_SCAN_IGNORE_FOV_SKILL &&
+		!sensor->IsInFieldOfView(center))
+	{
+		return false;
+	}
+
+	return true;
+}
+
+CBaseEntity* ICombat::SelectMostDangerousEntity(CBaseEntity* first, CBaseEntity* second) const
+{
+	const Vector origin = GetBot<CBaseBot>()->GetEyeOrigin();
+	
+	if ((origin - UtilHelpers::getWorldSpaceCenter(first)).LengthSqr() <= (origin - UtilHelpers::getWorldSpaceCenter(second)).LengthSqr())
+	{
+		return first;
+	}
+
+	return second;
+}
+
 IDecisionQuery::DesiredAimSpot ICombat::SelectClearAimSpot(const bool allowheadshots) const
 {
 	const CombatData& data = GetCachedCombatData();
@@ -931,6 +1056,79 @@ void ICombat::CombatAim(const CBaseBot* bot, const CKnownEntity* threat, const C
 			}
 		}
 	}
+}
+
+void ICombat::DangerScanUpdate()
+{
+#ifdef EXT_VPROF_ENABLED
+	VPROF_BUDGET("ICombat::DangerScanUpdate", "NavBot");
+#endif // EXT_VPROF_ENABLED
+
+	if (!CanScanForDanger()) { return; }
+
+	CBaseBot* bot = GetBot<CBaseBot>();
+	GetDangerScanTimer().Start(bot->GetDifficultyProfile()->GetDangerScanFrequency());
+	UtilHelpers::CEntityEnumerator collector;
+	const float size = bot->GetDifficultyProfile()->GetDangerScanSize();
+	Vector vSize{ size, size, bot->GetMovementInterface()->GetStandingHullHeight() * 3.0f };
+	Vector origin = bot->GetAbsOrigin();
+	Vector forward;
+	bot->EyeVectors(&forward);
+	// shift the origin to in-front of the bot
+	origin = (origin + (forward * (bot->GetMovementInterface()->GetHullWidth() * 2.0f)));
+	UtilHelpers::EntitiesInBox(origin - vSize, origin + vSize, collector);
+	std::vector<CBaseEntity*> dangerEnts;
+
+	auto func = [this, &dangerEnts](CBaseEntity* entity) {
+		if (this->IsEntityADangerSource(entity) && this->IsAwareOfDangerEntity(entity))
+		{
+			dangerEnts.push_back(entity);
+		}
+
+		return true;
+	};
+
+	collector.ForEach(func);
+
+	if (dangerEnts.empty()) { return; }
+
+	CBaseEntity* first = nullptr;
+
+	for (CBaseEntity* second : dangerEnts)
+	{
+		// assign first entity
+		if (!first)
+		{
+			first = second;
+			continue;
+		}
+
+		first = SelectMostDangerousEntity(first, second);
+
+		// if selection returns NULL, stop the loop and set the last to NULL
+		if (!first)
+		{
+			SetMostDangerousEntity(nullptr);
+			return;
+		}
+	}
+
+	EXT_ASSERT(first != nullptr, "DangerScanUpdate \"first\" entity is NULL!");
+
+	CBaseEntity* last = GetMostDangerousEntity();
+
+	// still the same entity since the last update
+	if (last != nullptr && last == first) { return; }
+
+	if (bot->IsDebugging(BOTDEBUG_COMBAT))
+	{
+		bot->DebugPrintToConsole(255, 255, 0, "%s DANGER SCAN FOUND NEW DANGEROUS ENTITY %s \n", bot->GetDebugIdentifier(), UtilHelpers::textformat::FormatEntity(first));
+		NDebugOverlay::EntityBounds(first, 255, 0, 0, 127, 0.5f);
+	}
+
+	SetMostDangerousEntity(first);
+	// dispatch event so behavior can react
+	bot->OnDangerousEntityChanged(first, last);
 }
 
 float ICombat::CombatData::GetTimeSinceLostLOS() const

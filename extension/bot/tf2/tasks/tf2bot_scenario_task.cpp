@@ -38,6 +38,7 @@
 #include "scenario/passtime/tf2bot_passtime_monitor_task.h"
 #include "scenario/rd/tf2bot_rd_monitor_task.h"
 #include "scenario/tow/tf2bot_tug_of_war_tasks.h"
+#include "tf2bot_spy_check_task.h"
 #include "tf2bot_scenario_task.h"
 
 static bool HalloweenSpellPickupValidator(CTF2Bot* bot, CBaseEntity* spellPickup)
@@ -304,6 +305,16 @@ AITask<CTF2Bot>* CTF2BotScenarioTask::SelectClassTask(CTF2Bot* me)
 	}
 
 	return nullptr;
+}
+
+TaskEventResponseResult<CTF2Bot> CTF2BotScenarioTask::OnSight(CTF2Bot* bot, CBaseEntity* subject)
+{
+	if (CTF2BotSpyCheckTask::IsPossible(bot, subject))
+	{
+		return TryPauseFor(new CTF2BotSpyCheckTask(subject), PRIORITY_MEDIUM, "Spychecking a suspicious player!");
+	}
+
+	return TryContinue();
 }
 
 TaskEventResponseResult<CTF2Bot> CTF2BotScenarioTask::OnVoiceCommand(CTF2Bot* bot, CBaseEntity* subject, int command)
