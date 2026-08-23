@@ -16,8 +16,8 @@ CZPSBotScenarioTask::CZPSBotScenarioTask()
 
 	// it appears that players can body block each other from picking up ammo
 	// randomize the search timer to try to avoid having bots pick the same item
-	m_ammoSearchTimer.StartRandom(1.0f, 15.0f);
-	m_weaponSearchTimer.StartRandom(3.0f, 15.0f);
+	m_ammoSearchTimer.StartRandom(1.0f, 3.0f);
+	m_weaponSearchTimer.StartRandom(0.5f, 2.0f);
 	m_healthSearchTimer.StartRandom(10.0f, 20.0f);
 	m_armorSearchTimer.StartRandom(10.0f, 30.0f);
 }

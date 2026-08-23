@@ -199,6 +199,18 @@ public:
 		}
 	}
 	int GetDefendersCount() const { return m_defenders; }
+	/**
+	 * @brief Notifies a bot is trying to pick up an item.
+	 * @param item Item being picked up.
+	 * @param cooldown Cooldown time.
+	 */
+	void NotifyItemPickup(CBaseEntity* item, const float cooldown = 10.0f);
+	/**
+	 * @brief Queries if an item was recently picked up.
+	 * @param item Item to check.
+	 * @return True if yes, false if not.
+	 */
+	bool WasItemRecentlyPickedUp(CBaseEntity* item) const;
 
 protected:
 	std::vector<ReportedEntityData>& GetEntityInfoStorageVector() { return m_reportedentitiesvec; }
@@ -214,7 +226,7 @@ protected:
 private:
 	std::vector<ReportedEntityData> m_reportedentitiesvec; // Vector of entities reported by bots.
 	int m_defenders; // number of bots doing defensive tasks
-
+	std::unordered_map<CBaseEntity*, float> m_pickuptime; 
 };
 
 /**

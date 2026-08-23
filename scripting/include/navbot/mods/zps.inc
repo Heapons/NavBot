@@ -36,6 +36,7 @@ methodmap NavBotZPSModInterface < NavBotModInterface
 	public static native void SetObjectiveUseButton(int entity);
 	/**
 	 * Sets the item id to search. The ID must match the ID of an item_deliver entity.
+	 * Fallbacks to targetname for legacy map support.
 	 * Used by NAVBOT_ZPS_OBJECTIVE_FIND_ITEM, NAVBOT_ZPS_OBJECTIVE_USE_ITEM, NAVBOT_ZPS_OBJECTIVE_DROP_ITEM, NAVBOT_ZPS_OBJECTIVE_DISCARD_ITEM
 	 * 
 	 * @param id			ID to search.

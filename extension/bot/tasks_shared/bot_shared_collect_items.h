@@ -60,6 +60,12 @@ namespace NBotSharedCollectItemTask
 				return false;
 			}
 
+			// Don't try to collect an item another bot from my team is trying to get
+			if (bot->GetSharedMemoryInterface()->WasItemRecentlyPickedUp(object))
+			{
+				return false;
+			}
+
 			if (navarea)
 			{
 				// bot can't reach it
@@ -240,6 +246,8 @@ public:
 			m_items.emplace_back(item);
 		}
 
+		// Don't call NotifyItemPickup for multi item for now
+
 		m_collectmethod = collectmethod;
 		m_it = m_items.begin();
 		m_pathfailures = 0;
@@ -252,6 +260,7 @@ public:
 		m_collectmethod = collectmethod;
 		m_it = m_items.begin();
 		m_pathfailures = 0;
+		bot->GetSharedMemoryInterface()->NotifyItemPickup(item);
 	}
 
 	// Sets the additional validation function to skip collecting an item, otherwise the bot only skips an items when the entity becomes NULL.

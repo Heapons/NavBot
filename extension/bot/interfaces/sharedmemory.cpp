@@ -67,6 +67,7 @@ ISharedBotMemory::ISharedBotMemory()
 {
 	m_defenders = 0;
 	m_reportedentitiesvec.reserve(32);
+	m_pickuptime.reserve(256);
 }
 
 ISharedBotMemory::~ISharedBotMemory()
@@ -77,6 +78,7 @@ void ISharedBotMemory::Reset()
 {
 	m_defenders = 0;
 	m_reportedentitiesvec.clear();
+	m_pickuptime.clear();
 }
 
 void ISharedBotMemory::Update()
@@ -90,4 +92,27 @@ void ISharedBotMemory::Update()
 
 void ISharedBotMemory::Frame()
 {
+}
+
+void ISharedBotMemory::NotifyItemPickup(CBaseEntity* item, const float cooldown)
+{
+	float time = gpGlobals->curtime + cooldown;
+	auto [iter, inserted] = m_pickuptime.try_emplace(item, time);
+
+	if (!inserted)
+	{
+		iter->second = time;
+	}
+}
+
+bool ISharedBotMemory::WasItemRecentlyPickedUp(CBaseEntity* item) const
+{
+	auto it = m_pickuptime.find(item);
+
+	if (it == m_pickuptime.cend())
+	{
+		return false;
+	}
+
+	return it->second > gpGlobals->curtime;
 }

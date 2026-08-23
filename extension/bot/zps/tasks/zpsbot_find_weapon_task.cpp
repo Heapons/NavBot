@@ -45,6 +45,14 @@ private:
 			return false;
 		}
 
+		ISharedBotMemory* sbm = bot->GetSharedMemoryInterface();
+
+		// another bot is going for this item, ignore it to avoid issues
+		if (sbm->WasItemRecentlyPickedUp(entity))
+		{
+			return false;
+		}
+
 		const char* classname = gamehelpers->GetEntityClassname(entity);
 
 		if (classname)
@@ -102,6 +110,7 @@ bool CZPSBotFindWeaponTask::IsPossible(CZPSBot* bot, CBaseEntity** outweapon)
 	}
 
 	*outweapon = search.SelectRandomResult();
+	bot->GetSharedMemoryInterface()->NotifyItemPickup(*outweapon);
 	return true;
 }
 

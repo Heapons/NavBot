@@ -82,6 +82,18 @@ TaskResult<CZPSBot> CZPSBotObjectiveFindItemTask::OnTaskUpdate(CZPSBot* bot)
 					found = entity;
 					return false;
 				}
+
+				// Fallback to targetname for legacy/old maps
+				const char* targetname = entityprops::GetEntityTargetname(entity);
+
+				if (targetname && targetname[0] != '\0')
+				{
+					if (ke::StrCaseCmp(targetname, name.c_str()) == 0)
+					{
+						found = entity;
+						return false;
+					}
+				}
 			}
 
 			return true;

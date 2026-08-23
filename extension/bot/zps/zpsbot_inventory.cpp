@@ -105,6 +105,17 @@ const CZPSBotWeapon* CZPSBotInventory::FindItemDeliver(const std::string& id)
 			{
 				result = weapon;
 			}
+
+			// Fallback to targetname for legacy/old maps
+			const char* targetname = entityprops::GetEntityTargetname(weapon->GetEntity());
+
+			if (targetname && targetname[0] != '\0')
+			{
+				if (ke::StrCaseCmp(targetname, id.c_str()) == 0)
+				{
+					result = weapon;
+				}
+			}
 		}
 	};
 
