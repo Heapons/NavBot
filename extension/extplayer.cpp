@@ -31,6 +31,8 @@ CBaseExtPlayer::CBaseExtPlayer(edict_t* edict)
 	m_lastnavarea = nullptr;
 	m_navupdatetimer = 6;
 	m_prethinkHook = -1;
+	m_vecBaseVelocity = entprops->GetPointerToEntData<Vector>(m_pEntity, Prop_Data, "m_vecBaseVelocity");
+	m_vecAbsVelocity = entprops->GetPointerToEntData<Vector>(m_pEntity, Prop_Data, "m_vecAbsVelocity");
 
 #ifdef EXT_DEBUG
 
@@ -272,23 +274,6 @@ void CBaseExtPlayer::EyeVectors(Vector* pForward, Vector* pRight, Vector* pUp) c
 {
 	auto& eyeangles = GetEyeAngles();
 	AngleVectors(eyeangles, pForward, pRight, pUp);
-}
-
-const Vector CBaseExtPlayer::GetAbsVelocity() const
-{
-	Vector result;
-
-	if (entprops->GetEntPropVector(GetIndex(), Prop_Data, "m_vecAbsVelocity", result) == false)
-	{
-		return vec3_origin;
-	}
-
-	return result;
-}
-
-void CBaseExtPlayer::SetAbsVelocity(const Vector& velocity) const
-{
-	entprops->SetEntPropVector(GetIndex(), Prop_Data, "m_vecAbsVelocity", velocity);
 }
 
 Vector CBaseExtPlayer::BodyDirection3D() const

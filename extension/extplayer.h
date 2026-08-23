@@ -72,8 +72,10 @@ public:
 	void GetHeadShotPosition(const char* bonename, Vector& result) const;
 	void EyeVectors(Vector* pForward) const;
 	void EyeVectors(Vector* pForward, Vector* pRight, Vector* pUp) const;
-	const Vector GetAbsVelocity() const;
-	void SetAbsVelocity(const Vector& velocity) const;
+	const Vector& GetAbsVelocity() const { return *m_vecAbsVelocity; }
+	void SetAbsVelocity(const Vector& velocity) { *m_vecAbsVelocity = velocity; }
+	const Vector& GetBaseVelocity() const { return *m_vecBaseVelocity; }
+	void SetBaseVelocity(const Vector& velocity) { *m_vecBaseVelocity = velocity; }
 	inline QAngle BodyAngles() const { return GetAbsAngles(); }
 	Vector BodyDirection3D() const;
 	Vector BodyDirection2D() const;
@@ -197,6 +199,8 @@ private:
 	CNavArea* m_lastnavarea;
 	int m_navupdatetimer;
 	int m_prethinkHook;
+	Vector* m_vecAbsVelocity;
+	Vector* m_vecBaseVelocity;
 
 	void SetupPlayerHooks();
 	/* CBasePlayer::PreThink hook */

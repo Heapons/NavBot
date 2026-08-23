@@ -615,7 +615,7 @@ void NavBotExt::Hook_GameFrame(bool simulating)
 		constexpr float ARROW_LENGTH = 48.0f;
 
 		const Vector origin = host.GetAbsOrigin();
-		const Vector vel = host.GetAbsVelocity();
+		const Vector& vel = host.GetAbsVelocity();
 		Vector dirvel = vel;
 		dirvel.NormalizeInPlace();
 		Vector eyefoward;

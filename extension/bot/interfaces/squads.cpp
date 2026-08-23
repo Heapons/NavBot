@@ -581,3 +581,51 @@ void botsquadutils::TryFormSquadFunc::CreateSquad()
 		}
 	}
 }
+
+#ifdef EXT_DEBUG
+
+CON_COMMAND_F(sm_navbot_debug_bot_squads, "Debug bot squads.", FCVAR_CHEAT | FCVAR_GAMEDLL)
+{
+	auto& bots = extmanager->GetAllBots();
+
+	for (auto& bot : bots)
+	{
+		ISquad* squad = bot->GetSquadInterface();
+
+		if (squad->IsInASquad() && squad->IsSquadValid() && squad->IsSquadLeader())
+		{
+			const ISquad::SquadData* data = squad->GetSquadData();
+
+			META_CONPRINTF("Squad data for \"%s\" squad.", UtilHelpers::textformat::FormatPlayer(bot->GetIndex()));
+			
+			if (data->GetSquadLeader()->IsHuman())
+			{
+				CBaseEntity* pLeader = data->GetSquadLeader()->GetPlayerEntity();
+
+				if (pLeader)
+				{
+					META_CONPRINTF("Human squad leader: %s. \n", UtilHelpers::textformat::FormatPlayer(UtilHelpers::IndexOfEntity(pLeader)));
+				}
+			}
+
+			META_CONPRINT("Squad members: \n");
+
+			for (std::size_t i = 0; i < data->GetMemberCount(); i++)
+			{
+				const ISquad::Member* member = data->GetMemberOfIndex(i);
+				CBaseEntity* pPlayer = member->GetPlayerEntity();
+				
+				if (pPlayer)
+				{
+					META_CONPRINTF("[%zu] Member %s \n", i, UtilHelpers::textformat::FormatPlayer(UtilHelpers::IndexOfEntity(pPlayer)));
+				}
+				else
+				{
+					META_CONPRINTF("[%zu] NULL player \n");
+				}
+			}
+		}
+	}
+}
+
+#endif // EXT_DEBUG

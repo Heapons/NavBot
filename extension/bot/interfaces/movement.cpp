@@ -199,7 +199,7 @@ void IMovement::Update()
 	ElevatorUpdate();
 	StrafeJumpUpdate();
 
-	Vector velocity = me->GetAbsVelocity();
+	const Vector& velocity = me->GetAbsVelocity();
 	m_speed = velocity.Length();
 	m_groundspeed = velocity.AsVector2D().Length();
 
@@ -1961,7 +1961,7 @@ void IMovement::UsePushLadder(const bool goingup, const Vector& destination)
 	}
 }
 
-void IMovement::DoSimpleObstacleScan(const float scanRange, const Vector* dir)
+void IMovement::DoSimpleObstacleScan(const float scanRange, const Vector* dir, const float traceSize)
 {
 #ifdef EXT_VPROF_ENABLED
 	VPROF_BUDGET("IMovement::DoSimpleObstacleScan", "NavBot");
@@ -1974,10 +1974,22 @@ void IMovement::DoSimpleObstacleScan(const float scanRange, const Vector* dir)
 
 	if (IsBreakingObstacle()) { return; }
 
-	constexpr auto size = 4.0f;
-	Vector traceMins(-size, -size, -size);
-	Vector traceMaxs(size, size, size);
 	CBaseBot* bot = GetBot<CBaseBot>();
+	float sxy, sz;
+
+	if (traceSize >= 1.0f)
+	{
+		sxy = traceSize;
+		sz = traceSize;
+	}
+	else
+	{
+		sxy = (GetHullWidth() * 0.5f) - 1.0f;
+		sz = (GetStandingHullHeight() * 0.5f);
+	}
+
+	Vector traceMins(-sxy, -sxy, -sz);
+	Vector traceMaxs(sxy, sxy, sz);
 	Vector eyePos = bot->GetEyeOrigin();
 	Vector endPos;
 
@@ -1998,6 +2010,12 @@ void IMovement::DoSimpleObstacleScan(const float scanRange, const Vector* dir)
 
 	if (tr.DidHit() && tr.m_pEnt != nullptr && tr.DidHitNonWorldEntity())
 	{
+		if (bot->IsDebugging(BOTDEBUG_MOVEMENT))
+		{
+			NDebugOverlay::SweptBox(eyePos, tr.endpos, traceMins, traceMaxs, QAngle(0.0f, 0.0f, 0.0f), 255, 0, 0, 60, 2.0f);
+			bot->DebugPrintToConsole(255, 255, 0, "%s IMovement::DoSimpleObstacleScan HIT %s\n", bot->GetDebugIdentifier(), UtilHelpers::textformat::FormatEntity(tr.m_pEnt));
+		}
+
 		CBaseEntity* dummy = nullptr;
 
 		if (IsUseableObstacle(tr.m_pEnt, &dummy))
@@ -2012,6 +2030,13 @@ void IMovement::DoSimpleObstacleScan(const float scanRange, const Vector* dir)
 			BreakObstacle(tr.m_pEnt);
 			m_simpleObstacleScanCooldown.Start(3.0f);
 			return;
+		}
+	}
+	else
+	{
+		if (bot->IsDebugging(BOTDEBUG_MOVEMENT))
+		{
+			NDebugOverlay::SweptBox(eyePos, tr.endpos, traceMins, traceMaxs, QAngle(0.0f, 0.0f, 0.0f), 0, 200, 0, 60, 0.5f);
 		}
 	}
 
@@ -2158,6 +2183,12 @@ void IMovement::StuckMonitor()
 
 void IMovement::TraverseLadder()
 {
+	if (IsBreakingObstacle())
+	{
+		// stop ladder logic if the bot is breaking an obstacle in their path
+		return;
+	}
+
 	LadderState newState;
 
 	switch (m_ladderFSM.GetState())
@@ -2416,16 +2447,18 @@ void IMovement::UnstuckTeleport(CBaseBot* bot, CMeshNavigator* navigator, const 
 
 void IMovement::DoJumpAssist()
 {
-	if (sdkcalls->IsTeleportAvailable())
-	{
+//	if (sdkcalls->IsTeleportAvailable())
+//	{
 		CBaseBot* bot = GetBot<CBaseBot>();
 		Vector velocity = bot->GetAbsVelocity();
 		// bots do a crouch jump when doing a gap jump but we don't the crouched boost in this specific case
 		const float boost = (IsCompletelyCrouched() && !IsJumpingAcrossGap()) ? IMovement::s_crouchedJumpBoost : IMovement::s_standingJumpBoost;
 		velocity.z += boost;
 
-		sdkcalls->CBaseEntity_Teleport(bot->GetEntity(), nullptr, nullptr, &velocity);
-	}
+		// teleport has some side effects
+		// sdkcalls->CBaseEntity_Teleport(bot->GetEntity(), nullptr, nullptr, &velocity);
+		bot->SetAbsVelocity(velocity);
+//	}
 }
 
 // approach a ladder that we will go up
@@ -2640,7 +2673,7 @@ IMovement::LadderState IMovement::UseLadderUp()
 	auto origin = bot->GetAbsOrigin();
 	const float z = origin.z;
 	const float z_dist = std::abs(m_ladderFSM.m_ladderGoalZ - z);
-	DoSimpleObstacleScan(CBaseExtPlayer::PLAYER_USE_RADIUS); // open any doors that may be in the ladder's path
+	DoSimpleObstacleScan(CBaseExtPlayer::PLAYER_USE_RADIUS, nullptr, -1.0f); // open any doors that may be in the ladder's path
 
 	if (!IsOnLadder())
 	{
@@ -2717,7 +2750,7 @@ IMovement::LadderState IMovement::UseLadderDown()
 	const float z = origin.z;
 	const bool isOnLadder = IsOnLadder();
 	const bool isDebugging = me->IsDebugging(BOTDEBUG_MOVEMENT);
-	DoSimpleObstacleScan(CBaseExtPlayer::PLAYER_USE_RADIUS); // open any doors that may be in the ladder's path
+	DoSimpleObstacleScan(CBaseExtPlayer::PLAYER_USE_RADIUS, nullptr, -1.0f); // open any doors that may be in the ladder's path
 
 	// Fell off the ladder
 	if (!isOnLadder)
@@ -3584,7 +3617,7 @@ bool IMovement::UpdatePushLadderLogic()
 			return false;
 		}
 
-		Vector velocity = bot->GetAbsVelocity();
+		const Vector& velocity = bot->GetAbsVelocity();
 
 		if (velocity.z >= -16.0f)
 		{

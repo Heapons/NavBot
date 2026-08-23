@@ -575,8 +575,9 @@ public:
 	 * @brief Does a simple scan for obstacles.
 	 * @param scanRange Raycast max range.
 	 * @param dir Optional direction to scan. If NULL, uses the forward component of the bot's eye angles.
+	 * @param traceSize Size of the trace hull box. Negative values to use a size based on the bot's own HULL.
 	 */
-	void DoSimpleObstacleScan(const float scanRange, const Vector* dir = nullptr);
+	void DoSimpleObstacleScan(const float scanRange, const Vector* dir = nullptr, const float traceSize = 4.0f);
 protected:
 	class LadderFSM
 	{
