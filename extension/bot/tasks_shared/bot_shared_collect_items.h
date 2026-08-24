@@ -1,6 +1,7 @@
 #ifndef __NAVBOT_BOT_SHARED_COLLECT_ITEMS_TASK_H_
 #define __NAVBOT_BOT_SHARED_COLLECT_ITEMS_TASK_H_
 
+#include <manager.h>
 #include <mods/basemod.h>
 #include <mods/modhelpers.h>
 #include <bot/basebot.h>
@@ -60,10 +61,13 @@ namespace NBotSharedCollectItemTask
 				return false;
 			}
 
-			// Don't try to collect an item another bot from my team is trying to get
-			if (bot->GetSharedMemoryInterface()->WasItemRecentlyPickedUp(object))
+			if (extmanager->GetMod()->IsTeamBasedGame())
 			{
-				return false;
+				// Don't try to collect an item another bot from my team is trying to get
+				if (bot->GetSharedMemoryInterface()->WasItemRecentlyPickedUp(object))
+				{
+					return false;
+				}
 			}
 
 			if (navarea)
@@ -260,7 +264,11 @@ public:
 		m_collectmethod = collectmethod;
 		m_it = m_items.begin();
 		m_pathfailures = 0;
-		bot->GetSharedMemoryInterface()->NotifyItemPickup(item);
+
+		if (extmanager->GetMod()->IsTeamBasedGame())
+		{
+			bot->GetSharedMemoryInterface()->NotifyItemPickup(item);
+		}
 	}
 
 	// Sets the additional validation function to skip collecting an item, otherwise the bot only skips an items when the entity becomes NULL.

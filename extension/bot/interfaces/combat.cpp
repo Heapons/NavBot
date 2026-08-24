@@ -784,6 +784,12 @@ bool ICombat::CanCalloutThreat(const CKnownEntity* threat) const
 		return false;
 	}
 
+	// Check if this specific enemy shouldn't be called out.
+	if (!extmanager->GetMod()->ShouldCalloutEnemy(GetBot(), threat))
+	{
+		return false;
+	}
+
 	// Don't spam callouts
 	if (!m_calloutTimer.IsElapsed())
 	{

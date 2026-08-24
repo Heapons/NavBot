@@ -61,18 +61,18 @@
 			}
 			"CBasePlayer::ProcessUsercmds"
 			{
-				"windows64" "476"
-				"linux64"	"477"
+				"windows64" "482"
+				"linux64"	"483"
 			}
 			"CBaseAnimating::GetBoneTransform"
 			{
-				"windows64"	"233"
-				"linux64"	"234"
+				"windows64"	"238"
+				"linux64"	"239"
 			}
 			"CBaseFilter::PassesFilterImpl"
 			{
-				"windows64"	"225"
-				"linux64"	"226"
+				"windows64"	"230"
+				"linux64"	"231"
 			}
 
 			/**

@@ -379,6 +379,12 @@ void CBaseMod::GetEnemyHumanName(const CKnownEntity* enemy, std::string& friendl
 	friendlyName = enemy->GetEntityClassname();
 }
 
+bool CBaseMod::ShouldCalloutEnemy(CBaseBot* bot, const CKnownEntity* enemy) const
+{
+	// only callout enemies that derives from CBaseCombatCharacter. These includes players and NPCs.
+	return modhelpers->IsCombatCharacter(enemy->GetEntity());
+}
+
 #ifdef EXT_DEBUG
 
 void CBaseMod::Debug_PrintNPCClassnameList()

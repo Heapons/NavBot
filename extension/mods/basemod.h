@@ -202,6 +202,13 @@ public:
 	 * @param[out] friendlyName Human friendly name output. 
 	 */
 	virtual void GetEnemyHumanName(const CKnownEntity* enemy, std::string& friendlyName) const;
+	/**
+	 * @brief Should the given enemy be called out by the bot
+	 * @param bot Bot sending the callout.
+	 * @param enemy Enemy.
+	 * @return True if yes, false otherwise.
+	 */
+	virtual bool ShouldCalloutEnemy(CBaseBot* bot, const CKnownEntity* enemy) const;
 
 protected:
 	std::unique_ptr<CModSettings> m_modsettings;
