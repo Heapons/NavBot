@@ -358,16 +358,27 @@ bool CNavMesh::IsEntityWalkable(CBaseEntity* pEntity, unsigned int flags)
 
 bool CNavMesh::IsEntitySolidForTransientAreas(CBaseEntity* pEntity) const
 {
-	// These are always solid
-	if (UtilHelpers::FClassnameIs(pEntity, "func_brush") ||
-		UtilHelpers::FClassnameIs(pEntity, "func_door") ||
-		UtilHelpers::FClassnameIs(pEntity, "func_door_rotating") ||
-		UtilHelpers::FClassnameIs(pEntity, "prop_dynamic*") ||
-		UtilHelpers::FClassnameIs(pEntity, "prop_static") ||
-		UtilHelpers::FClassnameIs(pEntity, "func_wall_toggle") ||
-		UtilHelpers::FClassnameIs(pEntity, "func_tracktrain"))
+	using namespace std::literals::string_view_literals;
+
+	// Classname patterns of entities that should always be solid for transient areas.
+	constexpr std::array always_solid_patterns = {
+		"func_brush"sv,
+		"func_door"sv,
+		"func_door_rotating"sv,
+		"prop_dynamic*"sv,
+		"prop_static"sv,
+		"func_wall_toggle"sv,
+		"func_movelinear"sv,
+		"func_train"sv,
+		"func_tracktrain"sv,
+	};
+
+	for (auto& pattern : always_solid_patterns)
 	{
-		return true;
+		if (UtilHelpers::FClassnameIs(pEntity, pattern.data()))
+		{
+			return true;
+		}
 	}
 
 	if (UtilHelpers::FClassnameIs(pEntity, "func_breakable"))
