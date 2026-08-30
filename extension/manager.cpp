@@ -860,7 +860,6 @@ bool CExtManager::SMAPI_OnNavBotObstacleOnPath(const CBaseBot* bot, CBaseEntity*
 		m_onbotobstacleonpath->PushCell(static_cast<cell_t>(hitWorld));
 		cell_t arr[3];
 		pawnutils::VectorToPawnFloatArray(arr, goal);
-		args.PushArray(arr, 3);
 		m_onbotobstacleonpath->PushArray(arr, 3);
 		cell_t result = 0;
 		m_onbotobstacleonpath->Execute(&result);
