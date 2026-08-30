@@ -85,6 +85,18 @@ forward void OnNavBotStuck(NavBot bot, int count);
 forward void OnNavBotModRoundRestart();
 
 /**
+ * Called when the bot's navigator detects an obstacle on the bot's path.
+ * Allows plugins to implement custom obstacle handling.
+ * 
+ * @param bot		NavBot bot instance.
+ * @param entity	Index of the entity blocking the path.
+ * @param hitWorld	If true, the entity blocking the path is the world.
+ * @param goal		Position the bot is currently trying to reach.
+ * @return			Returning Plugin_Continue let's the navigator decide what do to about the obstacle. Anything else blocks it.
+ */
+forward Action OnNavBotObstacleOnPath(NavBot bot, int entity, bool hitWorld, const float goal[3]);
+
+/**
  * Builds a path from the start position to the end position.
  * 
  * @param vStart				Path start position.

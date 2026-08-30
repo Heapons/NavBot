@@ -1720,7 +1720,7 @@ void IMovement::UseElevator(const CNavElevator* elevator, const CNavArea* from, 
 
 bool IMovement::BreakObstacle(CBaseEntity* obstacle)
 {
-	if (obstacle == nullptr)
+	if (!obstacle)
 	{
 		return false;
 	}
@@ -1731,17 +1731,20 @@ bool IMovement::BreakObstacle(CBaseEntity* obstacle)
 	if (index == 0) { return false; }
 
 	constexpr auto MIN_DAMAGE = 45.0f;
-	int health = UtilHelpers::GetEntityHealth(index);
+	int health = UtilHelpers::GetEntityHealth(UtilHelpers::IndexOfEntity(obstacle));
 	float timeout = (static_cast<float>(health) / MIN_DAMAGE) + 2.0f;
 
-	m_obstacleEntity = obstacle;
-	m_isBreakingObstacle = true;
-	m_obstacleBreakTimeout.Start(timeout);
+	m_obstacleBreakData.m_obstacleEntity = obstacle;
+	m_obstacleBreakData.m_isBreakingObstacle = true;
+	m_obstacleBreakData.m_obstacleBreakTimeout.Start(timeout);
+	m_obstacleBreakData.m_checkLOSTimer.Start(ObstacleBreakData::LOS_CHECK_INTERVAL);
+	m_obstacleBreakData.m_initialPosition = UtilHelpers::getWorldSpaceCenter(obstacle);
 
 	if (GetBot<CBaseBot>()->IsDebugging(BOTDEBUG_MOVEMENT))
 	{
-		GetBot<CBaseBot>()->DebugPrintToConsole(0, 255, 255, "%s BREAKING OBSTACLE %s HEALTH %i TIMEOUT %g\n", 
-			GetBot<CBaseBot>()->GetDebugIdentifier(), UtilHelpers::textformat::FormatEntity(obstacle), health, timeout);
+		GetBot<CBaseBot>()->DebugPrintToConsole(0, 255, 255, "%s BREAKING OBSTACLE %s HEALTH %i TIMEOUT %g POSITION %s\n", 
+			GetBot<CBaseBot>()->GetDebugIdentifier(), UtilHelpers::textformat::FormatEntity(obstacle), health, timeout, 
+			UtilHelpers::textformat::FormatVector(m_obstacleBreakData.m_initialPosition));
 	}
 
 	return true;
@@ -1861,9 +1864,7 @@ void IMovement::OnDoneBreakingObstacle(CBaseEntity* obstacle, const bool istimed
 		}
 	}
 
-	m_obstacleBreakTimeout.Invalidate();
-	m_isBreakingObstacle = false;
-	m_obstacleEntity = nullptr;
+	m_obstacleBreakData.Reset();
 	me->GetControlInterface()->ReleaseAllAttackButtons();
 }
 
@@ -2279,16 +2280,20 @@ void IMovement::ElevatorUpdate()
 
 void IMovement::ObstacleBreakUpdate()
 {
-	if (!m_isBreakingObstacle)
+#ifdef EXT_VPROF_ENABLED
+	VPROF_BUDGET("IMovement::ObstacleBreakUpdate", "NavBot");
+#endif // EXT_VPROF_ENABLED
+
+	if (!m_obstacleBreakData.IsBreakingObstacle())
 	{
 		return;
 	}
 
-	CBaseEntity* obstacle = m_obstacleEntity.Get();
+	CBaseEntity* obstacle = m_obstacleBreakData.GetObstacle();
 
-	if (m_obstacleBreakTimeout.IsElapsed() || obstacle == nullptr)
+	if (m_obstacleBreakData.m_obstacleBreakTimeout.IsElapsed() || obstacle == nullptr)
 	{
-		OnDoneBreakingObstacle(obstacle, m_obstacleBreakTimeout.IsElapsed());
+		OnDoneBreakingObstacle(obstacle, m_obstacleBreakData.m_obstacleBreakTimeout.IsElapsed());
 		return;
 	}
 
@@ -2305,6 +2310,28 @@ void IMovement::ObstacleBreakUpdate()
 	Vector center = UtilHelpers::getWorldSpaceCenter(obstacle);
 	UtilHelpers::math::CalcClosestPointOfEntity(obstacle, eyepos, pos);
 	bot->GetInventoryInterface()->SelectBestWeaponForBreakables();
+
+	if (m_obstacleBreakData.m_checkLOSTimer.IsElapsed())
+	{
+		m_obstacleBreakData.m_checkLOSTimer.Start(ObstacleBreakData::LOS_CHECK_INTERVAL);
+
+		trace::CTraceFilterSimple filter(bot->GetEntity(), COLLISION_GROUP_NONE);
+		trace_t tr;
+		trace::line(eyepos, center, MASK_SOLID, &filter, tr);
+
+		if (tr.fraction < 1.0f && tr.m_pEnt != obstacle)
+		{
+			if (bot->IsDebugging(BOTDEBUG_MOVEMENT))
+			{
+				NDebugOverlay::HorzArrow(eyepos, center, 4.0f, 255, 0, 0, 255, true, 5.0f);
+				bot->DebugPrintToConsole(255, 0, 0, "%s OBSTACLE BREAK IS OBSTRUCTED, ABORTED! HIT SOLID (%s) AT <%s> \n", 
+					UtilHelpers::textformat::FormatEntity(tr.m_pEnt), UtilHelpers::textformat::FormatVector(tr.endpos));
+			}
+
+			OnDoneBreakingObstacle(obstacle, false);
+			return;
+		}
+	}
 	
 	MoveTowards(center, MOVEWEIGHT_CRITICAL);
 
@@ -3483,10 +3510,8 @@ void IMovement::_Reset()
 	m_elevatorTimeout.Invalidate();
 	m_elevatorState = NOT_USING_ELEVATOR;
 	m_lastMoveWeight = 0;
-	m_isBreakingObstacle = false;
 	m_crouchToBreak = false;
-	m_obstacleBreakTimeout.Invalidate();
-	m_obstacleEntity = nullptr;
+	m_obstacleBreakData.Reset();
 	m_catapultStartPosition = vec3_origin;
 	m_isStopAndWait = false;
 	m_doJumpAssist = false;

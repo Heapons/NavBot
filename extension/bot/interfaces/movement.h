@@ -391,7 +391,7 @@ public:
 	 * Returning true will stop bots from firing their weapons at their enemies. False to allow normal behavior.
 	 * @return True if the bot should let the movement interface control the weapons. False otherwise.
 	 */
-	virtual bool NeedsWeaponControl() const { return m_isBreakingObstacle; }
+	virtual bool NeedsWeaponControl() const { return m_obstacleBreakData.IsBreakingObstacle(); }
 	virtual float GetMinimumMovementSpeed() { return m_maxspeed * 0.4f; }
 	virtual bool IsClimbingOrJumping();
 	inline virtual bool IsUsingLadder() { return m_ladderFSM.m_ladderState != NOT_USING_LADDER; } // true if the bot is using a ladder
@@ -452,6 +452,13 @@ public:
 	virtual void AdjustPathCrossingPoint(const CNavArea* fromArea, const CNavArea* toArea, const Vector& fromPos, Vector* crosspoint);
 	// Called when the bot is determined to be stuck, try to unstuck it (IE: jumping)
 	virtual void TryToUnstuck();
+	/**
+	 * @brief Called before ObstacleOnPath and before the navigator decided what to do about the given obstacle.
+	 * @param obstacle Entity obstructing the bot's path.
+	 * @param hitWorld If true, the entity hit is the world.
+	 * @param goalPos Position the bot is trying to reach.
+	 */
+	virtual void PreObstacleOnPath(CBaseEntity* obstacle, const bool hitWorld, const Vector& goalPos) {}
 	// Called when there is an obstacle on the bot's path.
 	virtual void ObstacleOnPath(CBaseEntity* obstacle, const Vector& goalPos);
 	// Returns the Nav Ladder the bot is using if one.
@@ -468,7 +475,7 @@ public:
 	virtual void UseElevator(const CNavElevator* elevator, const CNavArea* from, const CNavArea* to);
 	void ClearMoveWeight() { m_lastMoveWeight = 0; }
 	int GetLastMoveWeight() const { return m_lastMoveWeight; }
-	virtual bool IsBreakingObstacle() const { return m_isBreakingObstacle; }
+	virtual bool IsBreakingObstacle() const { return m_obstacleBreakData.IsBreakingObstacle(); }
 	virtual bool BreakObstacle(CBaseEntity* obstacle);
 	/**
 	 * @brief Called by the navigation when scanning for obstacle that can be dealt with by pressing the USE key.
@@ -652,6 +659,36 @@ protected:
 		CountdownTimer m_timer;
 	};
 
+	class ObstacleBreakData
+	{
+	public:
+		ObstacleBreakData()
+		{
+			Reset();
+		}
+
+		void Reset()
+		{
+			m_obstacleEntity.Term();
+			m_obstacleBreakTimeout.Invalidate();
+			m_checkLOSTimer.Invalidate();
+			m_initialPosition.Init(0.0f, 0.0f, 0.0f);
+			m_isBreakingObstacle = false;
+		}
+
+		bool IsBreakingObstacle() const { return m_isBreakingObstacle; }
+		CBaseEntity* GetObstacle() const { return m_obstacleEntity.Get(); }
+		const Vector& GetInitialPosition() const { return m_initialPosition; }
+
+		CHandle<CBaseEntity> m_obstacleEntity;
+		CountdownTimer m_obstacleBreakTimeout;
+		CountdownTimer m_checkLOSTimer;
+		Vector m_initialPosition;
+		bool m_isBreakingObstacle;
+
+		static constexpr float LOS_CHECK_INTERVAL = 2.0f;
+	};
+
 	LadderFSM m_ladderFSM; // ladder finite state machine
 	CountdownTimer m_jumpCooldown;
 	CountdownTimer m_jumpTimer;
@@ -662,7 +699,6 @@ protected:
 	bool m_isJumpingAcrossGap;
 	bool m_isClimbingObstacle;
 	bool m_isAirborne;
-	bool m_isBreakingObstacle;
 	bool m_crouchToBreak;
 	bool m_isUsingCatapult;
 	bool m_wasLaunched; // was the bot launched already? (CHEAT)
@@ -673,8 +709,7 @@ protected:
 	ElevatorState m_elevatorState;
 	CountdownTimer m_elevatorTimeout;
 	int m_lastMoveWeight;
-	CHandle<CBaseEntity> m_obstacleEntity;
-	CountdownTimer m_obstacleBreakTimeout;
+	ObstacleBreakData m_obstacleBreakData;
 	CountdownTimer m_counterStrafeTimer;
 	PushLadderData m_pushLadderData;
 
@@ -850,7 +885,7 @@ inline bool IMovement::IsControllingMovements() const
 	{
 		return true; // take full control when doing elevator operations
 	}
-	else if (m_isBreakingObstacle)
+	else if (m_obstacleBreakData.IsBreakingObstacle())
 	{
 		return true; // take full control when breaking an obstacle on my path
 	}

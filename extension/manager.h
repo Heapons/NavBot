@@ -231,6 +231,7 @@ public:
 			m_onmodroundrestart->Execute(nullptr);
 		}
 	}
+	bool SMAPI_OnNavBotObstacleOnPath(const CBaseBot* bot, CBaseEntity* obstacle, const bool hitWorld, const Vector& goal);
 #endif // !NO_SOURCEPAWN_API
 
 private:
@@ -248,6 +249,7 @@ private:
 	SourceMod::IForward* m_onnavmeshdestroyedforward;
 	SourceMod::IForward* m_onbotstuckforward;
 	SourceMod::IForward* m_onmodroundrestart;
+	SourceMod::IForward* m_onbotobstacleonpath;
 #endif // !NO_SOURCEPAWN_API
 
 	size_t m_nextbotname; // Index of the next bot name to use

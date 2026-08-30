@@ -371,6 +371,8 @@ bool CNavMesh::IsEntitySolidForTransientAreas(CBaseEntity* pEntity) const
 		"func_movelinear"sv,
 		"func_train"sv,
 		"func_tracktrain"sv,
+		/* These may be created by certain models when used in prop_dynamics. They hold the actual collision for the model. */
+		"phys_bone_follower"sv,
 	};
 
 	for (auto& pattern : always_solid_patterns)

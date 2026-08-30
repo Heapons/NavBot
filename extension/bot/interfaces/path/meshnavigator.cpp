@@ -714,6 +714,15 @@ bool CMeshNavigator::CheckForObstacles(CBaseBot* bot, const BotPathSegment* goal
 			NDebugOverlay::EntityBounds(obstacle, 255, 255, 0, 75, sm_navbot_path_obstacle_scan.GetFloat());
 		}
 
+#ifndef NO_SOURCEPAWN_API
+		if (extmanager->SMAPI_OnNavBotObstacleOnPath(bot, obstacle, isWorld, goal->goal))
+		{
+			return false;
+		}
+#endif // !NO_SOURCEPAWN_API
+
+		mover->PreObstacleOnPath(obstacle, isWorld, goal->goal);
+
 		if (!isWorld)
 		{
 			// can we break it?

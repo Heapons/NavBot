@@ -5,6 +5,7 @@
 #include "mod_loader.h"
 #include <bot/interfaces/weapons/dynamic_priority_manager.h>
 #include <navmesh/nav_mesh.h>
+#include <util/pawnutils.h>
 
 #ifdef EXT_DEBUG
 #include <sdkports/debugoverlay_shared.h>
@@ -52,6 +53,7 @@ CExtManager::CExtManager()
 	m_onnavmeshdestroyedforward = nullptr;
 	m_onbotstuckforward = nullptr;
 	m_onmodroundrestart = nullptr;
+	m_onbotobstacleonpath = nullptr;
 #endif // !NO_SOURCEPAWN_API
 }
 
@@ -69,6 +71,7 @@ CExtManager::~CExtManager()
 	forwards->ReleaseForward(m_onnavmeshdestroyedforward);
 	forwards->ReleaseForward(m_onbotstuckforward);
 	forwards->ReleaseForward(m_onmodroundrestart);
+	forwards->ReleaseForward(m_onbotobstacleonpath);
 #endif // !NO_SOURCEPAWN_API
 
 	// assign NULL to the smart ptr to detele the existing instance
@@ -87,6 +90,15 @@ void CExtManager::OnAllLoaded()
 	m_onnavmeshdestroyedforward = forwards->CreateForward("OnNavBotNavMeshDestroyed", ET_Ignore, 0, nullptr);
 	m_onbotstuckforward = forwards->CreateForward("OnNavBotStuck", ET_Ignore, 2, nullptr, SourceMod::ParamType::Param_Cell, SourceMod::ParamType::Param_Cell);
 	m_onmodroundrestart = forwards->CreateForward("OnNavBotModRoundRestart", ET_Ignore, 0, nullptr);
+
+	constexpr std::array obstacleonpathparams = {
+		SourceMod::ParamType::Param_Cell,
+		SourceMod::ParamType::Param_Cell,
+		SourceMod::ParamType::Param_Cell,
+		SourceMod::ParamType::Param_Array,
+	};
+
+	m_onbotobstacleonpath = forwards->CreateForward("OnNavBotObstacleOnPath", ET_Event, static_cast<unsigned int>(obstacleonpathparams.size()), obstacleonpathparams.data());
 #endif // !NO_SOURCEPAWN_API
 
 	CDynamicPriorityManager::CreateStandardFactories();
@@ -825,6 +837,38 @@ void CExtManager::SPAPI_CallPreBotUpdate(int bot)
 		m_prebotupdateforward->Execute();
 #endif // SM_BUILD_IS_DEV_BRANCH
 	}
+}
+
+bool CExtManager::SMAPI_OnNavBotObstacleOnPath(const CBaseBot* bot, CBaseEntity* obstacle, const bool hitWorld, const Vector& goal)
+{
+	if (m_onbotobstacleonpath->GetFunctionCount() > 0)
+	{
+#if SMINTERFACE_EXTENSIONAPI_VERSION >= 9
+		sp::CallArgs args;
+		args.PushCell(bot->GetIndex());
+		args.PushCell(gamehelpers->EntityToBCompatRef(obstacle));
+		args.PushCell(static_cast<cell_t>(hitWorld));
+		cell_t arr[3];
+		pawnutils::VectorToPawnFloatArray(arr, goal);
+		args.PushArray(arr, 3);
+		cell_t result = 0;
+		m_onbotobstacleonpath->Execute(args, &result);
+		return result != 0;
+#else
+		m_onbotobstacleonpath->PushCell(bot->GetIndex());
+		m_onbotobstacleonpath->PushCell(gamehelpers->EntityToBCompatRef(obstacle));
+		m_onbotobstacleonpath->PushCell(static_cast<cell_t>(hitWorld));
+		cell_t arr[3];
+		pawnutils::VectorToPawnFloatArray(arr, goal);
+		args.PushArray(arr, 3);
+		m_onbotobstacleonpath->PushArray(arr, 3);
+		cell_t result = 0;
+		m_onbotobstacleonpath->Execute(&result);
+		return result != 0;
+#endif // SMINTERFACE_EXTENSIONAPI_VERSION >= 9
+	}
+
+	return false;
 }
 #endif // !NO_SOURCEPAWN_API
 
