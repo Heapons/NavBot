@@ -311,6 +311,8 @@ class ExtensionConfig(object):
       '/GR',
       '/TP',
       '/std:c++20',
+      # Workaround C++20 SDK errors
+      '/Zc:strictStrings-',
     ]
     cxx.linkflags += [
       'kernel32.lib',

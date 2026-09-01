@@ -42,7 +42,7 @@
 #include <utlbuffer.h>
 #include <utlhash.h>
 #include <generichash.h>
-#include <fmtstr.h>
+// #include <fmtstr.h>
 
 #ifdef EXT_VPROF_ENABLED
 #include <tier0/vprof.h>
