@@ -164,14 +164,14 @@ class ExtensionConfig(object):
 
   def configure_cxx(self, cxx):
     if cxx.family == 'msvc':
-      if cxx.version < 1914 and builder.options.generator != 'vs':
-        raise Exception(f'Only MSVC 2017 15.7 and later are supported, full C++17 support is required. ({str(cxx.version)} < 1914)')
+      if cxx.version < 1929 and builder.options.generator != 'vs':
+        raise Exception(f'Only MSVC 2019 16.10 and later are supported, full C++20 support is required. ({str(cxx.version)} < 1929)')
     elif cxx.family == 'gcc':
-      if cxx.version < 'gcc-8':
-        raise Exception('Only GCC versions 8 or later are supported, full C++17 support is required.')
+      if cxx.version < 'gcc-13':
+        raise Exception('Only GCC versions 13 or later are supported, full C++20 support is required.')
     elif cxx.family == 'clang':
-      if cxx.version < 'clang-5':
-        raise Exception('Only clang versions 5 or later are supported, full C++17 support is required.')
+      if cxx.version < 'clang-17':
+        raise Exception('Only clang versions 17 or later are supported, full C++20 support is required.')
 
     if cxx.like('gcc'):
       self.configure_gcc(cxx)
@@ -236,7 +236,7 @@ class ExtensionConfig(object):
       '-Wno-varargs',
       '-Wno-expansion-to-defined',
       '-fvisibility-inlines-hidden',
-      '-std=c++17',
+      '-std=c++20',
     ]
 
     
@@ -275,6 +275,13 @@ class ExtensionConfig(object):
           '-Wno-tautological-overlap-compare',
       ]
 
+    # Work around C++ 20 errors in the SDK.
+    if cxx.version >= 'clang-16.0':
+      cxx.cxxflags += ['-Wno-deprecated-anon-enum-enum-conversion']
+
+    if cxx.version >= 'clang-12.0':
+      cxx.cxxflags += ['-Wno-deprecated-volatile']
+
     if have_gcc:
       # No longer set here, these are defined in the HL2SDK manifests when needed
       # cxx.cflags += ['-mfpmath=sse']
@@ -303,7 +310,7 @@ class ExtensionConfig(object):
       '/EHsc',
       '/GR',
       '/TP',
-      '/std:c++17',
+      '/std:c++20',
     ]
     cxx.linkflags += [
       'kernel32.lib',

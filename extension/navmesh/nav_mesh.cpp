@@ -4768,11 +4768,6 @@ void CNavMesh::CollectAreasTouchingEntity(CBaseEntity* entity, std::vector<CNavA
 	// Collects areas within the entity's bounds
 	CollectAreasOverlappingExtent<CNavArea>(extent, areas);
 
-	// Use engine trace to filter which areas are actually touching the entity
-	Ray_t ray;
-	trace_t tr;
-	Vector p1, p2;
-
 	for (CNavArea* area : areas)
 	{
 		if (area->IsCollidingWith(entity, navgenparams->human_crouch_height, false))
