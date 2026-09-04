@@ -13,6 +13,7 @@
 #include "navbot/baseplayer.inc"
 #include "navbot/bots.inc"
 #include "navbot/mod.inc"
+#include "navbot/debugoverlay.inc"
 
 enum NavBotAISoundType
 {
@@ -406,6 +407,8 @@ public __ext_navbot_SetNTVOptional()
 	MarkNativeAsOptional("NavBotPlayerControllerInterface.IsAimOnTarget");
 	MarkNativeAsOptional("NavBotPlayerControllerInterface.PressButtonByID");
 	MarkNativeAsOptional("NavBotPlayerControllerInterface.ReleaseButtonByID");
+	MarkNativeAsOptional("NavBotPlayerControllerInterface.GetPitchYawDifference");
+	MarkNativeAsOptional("NavBotPlayerControllerInterface.GetLookAtTarget");
 
 	/* Behavior Interface */
 	MarkNativeAsOptional("NavBotBehaviorInterface.GetTaskDebugString");
@@ -440,6 +443,19 @@ public __ext_navbot_SetNTVOptional()
 
 	/* Util functions */
 	MarkNativeAsOptional("NavBotUtils.GetEntityWorldSpaceCenter");
+
+	/* Debug Overlay functions */
+	MarkNativeAsOptional("NavBotDebugOverlay.Line");
+	MarkNativeAsOptional("NavBotDebugOverlay.Box");
+	MarkNativeAsOptional("NavBotDebugOverlay.SweptBox");
+	MarkNativeAsOptional("NavBotDebugOverlay.EntityBounds");
+	MarkNativeAsOptional("NavBotDebugOverlay.Triangle");
+	MarkNativeAsOptional("NavBotDebugOverlay.Text");
+	MarkNativeAsOptional("NavBotDebugOverlay.ScreenText");
+	MarkNativeAsOptional("NavBotDebugOverlay.Cross3D");
+	MarkNativeAsOptional("NavBotDebugOverlay.HorzArrow");
+	MarkNativeAsOptional("NavBotDebugOverlay.VertArrow");
+	MarkNativeAsOptional("NavBotDebugOverlay.Sphere");
 }
 
 #endif

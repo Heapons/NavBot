@@ -3,6 +3,7 @@
 
 #include <ISourceMod.h>
 #include <IForwardSys.h>
+#include <IExtensionSys.h>
 #include <amtl/am-platform.h>
 #include <sourcemod_version.h>
 #include <mods/basemod.h>
@@ -159,6 +160,13 @@ namespace pawnutils
 		context->LocalToPhysAddr(params[index], &arr);
 		return pawnutils::PawnFloatArrayToVector(arr);
 	}
+	// Reads a parameter into a QAngle
+	inline QAngle ReadAngle(IPluginContext* context, const cell_t* params, const std::size_t index)
+	{
+		cell_t* arr;
+		context->LocalToPhysAddr(params[index], &arr);
+		return { sp_ctof(arr[0]), sp_ctof(arr[1]), sp_ctof(arr[2]) };
+	}
 	// Reads a float parameter
 	inline float ReadFloat(const cell_t* params, const std::size_t index) { return sp_ctof(params[index]); }
 	// Reads a boolean parameter
@@ -176,13 +184,13 @@ namespace pawnutils
 		context->LocalToPhysAddr(params[index], &addr);
 		return addr == context->GetNullRef(SourcePawn::SP_NULL_VECTOR);
 	}
-#if SM_BUILD_MINOR_INT >= SM_VERSION_1_13
+#if SMINTERFACE_EXTENSIONAPI_VERSION >= 9
 	template <typename T>
-	inline void PushObjectPtr(sp::CallArgs args, T* object)
+	inline void PushObjectPtr(sp::CallArgs& args, T* object)
 	{
 		args.PushInt64(static_cast<int64_t>(reinterpret_cast<std::uintptr_t>(object)));
 	}
-#endif // SM_BUILD_MINOR_INT >= SM_VERSION_1_13
+#endif // SMINTERFACE_EXTENSIONAPI_VERSION >= 9
 	template <typename T>
 	inline void PushObjectPtr(SourceMod::IForward* forward, T* object)
 	{

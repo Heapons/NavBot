@@ -1,7 +1,7 @@
 project "NavBot-ORANGEBOX"
     language "C++"
     kind "SharedLib"
-    cppdialect "C++17"
+    cppdialect "C++20"
     targetname "navbot.ext.2.ep2"
     defines { "SOURCE_ENGINE=3", "NAVBOT_PCH_FILE=\"navbot_pch_orangebox.h\""  }
 

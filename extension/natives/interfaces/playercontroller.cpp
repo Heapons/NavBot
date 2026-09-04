@@ -88,6 +88,28 @@ namespace natives::bots::interfaces::playercontroller
 		iface->ReleaseButtonByID(static_cast<IPlayerInput::ButtonID>(params[2]));
 		return 0;
 	}
+	static cell_t Native_GetPitchYawDifference(IPluginContext* context, const cell_t* params)
+	{
+		IPlayerController* iface = pawnutils::UnsafeCastPawnAddressToObject<IPlayerController>(context, params, 1);
+
+		if (!iface) { context->ReportError("NULL interface ptr!"); return 0; }
+
+		float yaw = iface->GetYawDiff();
+		float pitch = iface->GetPitchDiff();
+		pawnutils::WriteFloatByRef(context, params, 2, yaw);
+		pawnutils::WriteFloatByRef(context, params, 3, pitch);
+		return 0;
+	}
+	static cell_t Native_GetLookAtTarget(IPluginContext* context, const cell_t* params)
+	{
+		IPlayerController* iface = pawnutils::UnsafeCastPawnAddressToObject<IPlayerController>(context, params, 1);
+
+		if (!iface) { context->ReportError("NULL interface ptr!"); return 0; }
+
+		const Vector& lookTarget = iface->GetLookTargetPosition();
+		pawnutils::WriteVector(context, params, 2, lookTarget);
+		return 0;
+	}
 
 	void setup(std::vector<sp_nativeinfo_t>& nv)
 	{
@@ -97,6 +119,8 @@ namespace natives::bots::interfaces::playercontroller
 			{"NavBotPlayerControllerInterface.IsAimOnTarget", Native_IsAimOnTarget},
 			{"NavBotPlayerControllerInterface.PressButtonByID", Native_PressButtonByID},
 			{"NavBotPlayerControllerInterface.ReleaseButtonByID", Native_ReleaseButtonByID},
+			{"NavBotPlayerControllerInterface.GetPitchYawDifference", Native_GetPitchYawDifference},
+			{"NavBotPlayerControllerInterface.GetLookAtTarget", Native_GetLookAtTarget},
 		};
 
 		nv.insert(nv.end(), std::begin(list), std::end(list));

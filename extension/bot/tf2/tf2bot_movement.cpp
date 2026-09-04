@@ -447,6 +447,12 @@ void CTF2BotMovement::BlastJumpUpdate()
 		Vector lookAt = m_rjData.m_landingPos;
 		lookAt.z += GetCrouchedHullHeight();
 		me->GetControlInterface()->AimAt(lookAt, IPlayerController::LOOK_MOVEMENT, 1.0f, "Looking at rocket jump landing!");
+		Vector origin = me->GetAbsOrigin();
+		
+		if (origin.z >= m_rjData.m_landingPos.z)
+		{
+			AirStrafeTowards(m_rjData.m_landingPos, true, MOVEWEIGHT_CRITICAL);
+		}
 
 		if (IsOnGround())
 		{

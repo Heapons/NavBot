@@ -568,6 +568,91 @@ void IMovement::DoWaterMove(const Vector& pos, const bool raiseHeight, const boo
 	MoveTowards(pos, weight);
 }
 
+void IMovement::AirStrafeTowards(const Vector& pos, const bool allowBraking, const int weight)
+{
+#ifdef EXT_VPROF_ENABLED
+	VPROF_BUDGET("IMovement::AirStrafeTowards", "NavBot");
+#endif // EXT_VPROF_ENABLED
+
+	// Implementation ported from https://github.com/Jump-Academy/smbl/blob/1c0b5e5f8ea200fb0e90241992b78e3b1de8098c/scripting/smbl/action/common/move/airstrafe.sp
+
+	// Can't airstrafe while on the ground
+	if (IsOnGround())
+	{
+		return;
+	}
+
+	if (m_lastMoveWeight > weight)
+	{
+		return;
+	}
+
+	bool isFirstMove = m_lastMoveWeight == 0;
+	m_lastMoveWeight = weight;
+
+	CBaseBot* me = GetBot<CBaseBot>();
+	IPlayerController* input = me->GetControlInterface();
+
+	// If we get multiple MoveTowards calls on the same frame, release old buttons first
+	if (!isFirstMove)
+	{
+		input->ReleaseForwardButton();
+		input->ReleaseBackwardsButton();
+		input->ReleaseMoveLeftButton();
+		input->ReleaseMoveRightButton();
+		input->ReleaseMoveUpButton();
+		input->ReleaseMoveDownButton();
+	}
+
+	const QAngle& eyeAngles = me->GetLocalEyeAngles();
+	const Vector& absVel = me->GetAbsVelocity();
+	QAngle angTangent;
+	VectorAngles(absVel, angTangent);
+	Vector origin = me->GetAbsOrigin();
+	Vector eyePos = me->GetEyeOrigin();
+	Vector to = (pos - origin);
+	QAngle angTo;
+	VectorAngles(to, angTo);
+	const float dist2D = (pos - origin).AsVector2D().Length();
+	const float angDisparity = AngleDiff(eyeAngles.y, angTangent.y);
+	const float absAngDisparity = std::abs(angDisparity);
+	const float vel2D = absVel.AsVector2D().Length();
+	input->AimAt(pos, IPlayerController::LOOK_MOVEMENT, 1.0f, "Looking at airstrafe destination!");
+	float yawDiff = input->GetYawDiff();
+	SetDesiredSpeed(GetMaxSpeed() * 2.0f);
+	input->PressCrouchButton();
+
+	if (yawDiff > -45.0f && yawDiff < 45.0f)
+	{
+		if (absAngDisparity > 5.0f)
+		{
+			if (angDisparity > 0.0f)
+			{
+				input->PressMoveLeftButton();
+			}
+			else
+			{
+				input->PressMoveRightButton();
+			}
+		}
+	}
+
+	if (allowBraking)
+	{
+		constexpr auto AIRBRAKE_DECELERATION = 2112.0f;	// 32u/s additional speed reduction every tick (32/(1/66))
+		constexpr auto AIRBRAKE_BUFFER = 15.0f;
+
+		Vector to2D = UtilHelpers::math::BuildDirectionVectorIgnoreZ(origin, pos);
+		float vel2DProjected = (absVel.x * to2D.x) + (absVel.y * to2D.y);
+		float airBrakeProximity = vel2DProjected * vel2DProjected / (2.0f * AIRBRAKE_DECELERATION);
+
+		if (dist2D - AIRBRAKE_BUFFER <= airBrakeProximity)
+		{
+			input->PressBackwardsButton();
+		}
+	}
+}
+
 void IMovement::AccelerateTowards(const Vector& pos, const float* speed, const float* delta, const int weight)
 {
 	if (m_lastMoveWeight > weight)

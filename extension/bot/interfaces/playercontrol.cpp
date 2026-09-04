@@ -26,6 +26,8 @@ IPlayerController::IPlayerController(CBaseBot* bot) : IBotInterface(bot), IPlaye
 	m_looktarget.Init();
 	m_lastangles.Init();
 	m_priority = LOOK_IDLE;
+	m_pitchDiff = 0.0f;
+	m_yawDiff = 0.0f;
 	m_isSteady = false;
 	m_isOnTarget = false;
 	m_didLookAtTarget = false;
@@ -82,6 +84,8 @@ void IPlayerController::Reset()
 	m_looktarget.Init();
 	m_lastangles.Init();
 	m_priority = LOOK_IDLE;
+	m_pitchDiff = 0.0f;
+	m_yawDiff = 0.0f;
 	m_isSteady = false;
 	m_isOnTarget = false;
 	m_didLookAtTarget = true;
@@ -182,11 +186,11 @@ void IPlayerController::RunLook()
 	float pitchChangeRate = AngleDiff(currentAngles.x, m_lastangles.x);
 	float yawChangeRate = AngleDiff(currentAngles.y, m_lastangles.y);
 
-	if (fabsf(pitchChangeRate) > smnav_bot_aim_stability_max_rate.GetFloat() * deltaTime)
+	if (std::abs(pitchChangeRate) > smnav_bot_aim_stability_max_rate.GetFloat() * deltaTime)
 	{
 		isSteady = false;
 	}
-	else if (fabsf(yawChangeRate) > smnav_bot_aim_stability_max_rate.GetFloat() * deltaTime)
+	else if (std::abs(yawChangeRate) > smnav_bot_aim_stability_max_rate.GetFloat() * deltaTime)
 	{
 		isSteady = false;
 	}
@@ -236,6 +240,8 @@ void IPlayerController::RunLook()
 	Vector forward;
 	me->EyeVectors(&forward);
 	const float dot = DotProduct(forward, to);
+	m_pitchDiff = AngleDiff(desiredAngles.x, currentAngles.x);
+	m_yawDiff = AngleDiff(desiredAngles.y, currentAngles.y);
 
 	if (dot > tolerance)
 	{

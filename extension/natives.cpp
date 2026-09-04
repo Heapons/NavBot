@@ -6,6 +6,7 @@
 #include <navmesh/nav_mesh.h>
 #include <navmesh/nav_area.h>
 #include <navmesh/nav_pathfind.h>
+#include "natives/debugoverlay.h"
 #include "natives.h"
 
 class SMBuildPathCostFunctor
@@ -349,5 +350,7 @@ namespace natives
 		};
 
 		nv.insert(nv.end(), std::begin(list), std::end(list));
+
+		natives::debugoverlay::setup(nv);
 	}
 }

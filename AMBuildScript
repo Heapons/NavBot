@@ -424,7 +424,7 @@ class ExtensionConfig(object):
 
   def add_sm_version(self, binary):
     cxx = binary.compiler
-    cxx.defines += ['SM_GENERATED_BUILD', 'SM_VERSION_1_13=13', 'SM_VERSION_1_12=12']
+    cxx.defines += ['SM_GENERATED_BUILD']
     cxx.sourcedeps += self.sm_version
 
   def add_ext_version(self, binary):

@@ -1,7 +1,7 @@
 project "NavBot-HL2DM"
     language "C++"
     kind "SharedLib"
-    cppdialect "C++17"
+    cppdialect "C++20"
     targetname "navbot.ext.2.hl2dm"
     defines { "SOURCE_ENGINE=7", "NAVBOT_PCH_FILE=\"navbot_pch_hl2dm.h\""  }
 

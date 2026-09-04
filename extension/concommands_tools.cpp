@@ -181,11 +181,13 @@ float CToolsPlayerPathCost::operator()(CNavArea* area, CNavArea* fromArea, const
 		{
 			return -1.0f;
 		}
-		else if (link->GetType() == OffMeshConnectionType::OFFMESH_BLAST_JUMP && !m_canblastjump)
+
+		if (link->GetType() == OffMeshConnectionType::OFFMESH_BLAST_JUMP && !m_canblastjump)
 		{
 			return -1.0f;
 		}
-		else if (link->GetType() == OffMeshConnectionType::OFFMESH_JUMP_OVER_GAP)
+
+		if (link->GetType() == OffMeshConnectionType::OFFMESH_JUMP_OVER_GAP)
 		{
 			if ((link->GetStart() - link->GetEnd()).Length() > m_maxgapjumpdistance)
 			{
@@ -490,12 +492,12 @@ CON_COMMAND_F(sm_navbot_tool_bots_go_to, "Bots will move to your current positio
 
 	if (engine->IsDedicatedServer())
 	{
-		Msg("This command can only be used on a Listen Server! \n");
+		META_CONPRINT("This command can only be used on a Listen Server! \n");
 		return;
 	}
 	
-	edict_t* host = gamehelpers->EdictOfIndex(1);
-	Vector goal = host->GetCollideable()->GetCollisionOrigin();
+	CBaseExtPlayer* host = extmanager->GetListenServerHost();
+	Vector goal = host->GetAbsOrigin();
 
 	const char* inputPos = args.FindArg("-pos");
 
@@ -522,6 +524,18 @@ CON_COMMAND_F(sm_navbot_tool_bots_go_to, "Bots will move to your current positio
 	if (area)
 	{
 		goal = area->GetCenter();
+	}
+
+	if (args.FindArg("-crosshair") != nullptr)
+	{
+		Vector forward;
+		host->EyeVectors(&forward);
+		Vector start = host->GetEyeOrigin();
+		Vector end = start + (forward * 16384.0f);
+		trace_t tr;
+		trace::CTraceFilterSimple filter(host->GetEntity(), COLLISION_GROUP_PLAYER);
+		trace::line(start, end, MASK_PLAYERSOLID, &filter, tr);
+		goal = tr.endpos;
 	}
 
 	auto func = [&goal](CBaseBot* bot) {

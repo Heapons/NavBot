@@ -137,6 +137,37 @@ public:
 	 * @brief Forces an update to the IsAimOnTarget status.
 	 */
 	void ForceUpdateAimOnTarget(const float tolerance = AIM_ON_TARGET_DOT_TOLERANCE);
+	/**
+	 * @brief Gets the pitch angle difference between the bot's current eye angles and the desired aim angles.
+	 * The values returned ranges between -180 and 180.
+	 * If positive, the bot's "crosshair" is above the look target.
+	 * @return Pitch angle difference.
+	 */
+	float GetPitchDiff() const { return m_pitchDiff; }
+	/**
+	 * @brief Gets the yaw angle difference between th e bot's current eye angles and the desired aim angles.
+	 * The values returned ranges between -180 and 180.
+	 * If positive, the bot's "crosshair" is to the right of the look target.
+	 * @return Yaw angle difference. 
+	 */
+	float GetYawDiff() const { return m_yawDiff; }
+
+	/*
+	* The illustration below shows the Pitch and Yaw signs based on where the bot's crosshair is in relation to the desired aim angles.
+	* 
+	* P = Pitch, Y = Yaw, X = look target
+	* 
+	*			|
+	*	  +P -Y | +P +Y
+	*			|
+	*	 -------X-------
+	*			|
+	*	  -P -Y | -P +Y
+	*			|
+	*/
+
+	// Gets the world position the bot is currently aiming at.
+	const Vector& GetLookTargetPosition() const { return m_looktarget; }
 
 private:
 
@@ -147,6 +178,8 @@ private:
 	Vector m_looktarget; // Look at target (Position Vector)
 	CHandle<CBaseEntity> m_lookentity; // Look at target (Entity, overrides vector if present)
 	QAngle m_lastangles; // Last bot view angles
+	float m_pitchDiff;
+	float m_yawDiff;
 	bool m_isSteady; // Is the bot aim steady?
 	bool m_isOnTarget; // Is the bot looking at it's look target
 	bool m_didLookAtTarget; // Did the bot look at it's current aim target at some point

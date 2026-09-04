@@ -1,7 +1,7 @@
 project "NavBot-TF2"
     language "C++"
     kind "SharedLib"
-    cppdialect "C++17"
+    cppdialect "C++20"
     targetname "navbot.ext.2.tf2"
     defines { "SOURCE_ENGINE=12", "NAVBOT_PCH_FILE=\"navbot_pch_tf2.h\"" }
 

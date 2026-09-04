@@ -1,7 +1,7 @@
 project "NavBot-DODS"
     language "C++"
     kind "SharedLib"
-    cppdialect "C++17"
+    cppdialect "C++20"
     targetname "navbot.ext.2.dods"
     defines { "SOURCE_ENGINE=8", "NAVBOT_PCH_FILE=\"navbot_pch_dods.h\"" }
 

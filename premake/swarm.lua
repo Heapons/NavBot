@@ -1,7 +1,7 @@
 project "NavBot-SWARM"
     language "C++"
     kind "SharedLib"
-    cppdialect "C++17"
+    cppdialect "C++20"
     targetname "navbot.ext.2.swarm"
     defines { "SOURCE_ENGINE=17", "NAVBOT_PCH_FILE=\"navbot_pch_swarm.h\""  }
 

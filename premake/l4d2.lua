@@ -1,7 +1,7 @@
 project "NavBot-L4D2"
     language "C++"
     kind "SharedLib"
-    cppdialect "C++17"
+    cppdialect "C++20"
     targetname "navbot.ext.2.l4d2"
     defines { "SOURCE_ENGINE=16", "NAVBOT_PCH_FILE=\"navbot_pch_l4d2.h\""  }
 

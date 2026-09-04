@@ -1,7 +1,7 @@
 project "NavBot-CSGO"
     language "C++"
     kind "SharedLib"
-    cppdialect "C++17"
+    cppdialect "C++20"
     targetname "navbot.ext.2.csgo"
     defines { "SOURCE_ENGINE=23", "NAVBOT_PCH_FILE=\"navbot_pch_csgo.h\""  }
 

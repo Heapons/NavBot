@@ -1,7 +1,7 @@
 project "NavBot-CSS"
     language "C++"
     kind "SharedLib"
-    cppdialect "C++17"
+    cppdialect "C++20"
     targetname "navbot.ext.2.css"
     defines { "SOURCE_ENGINE=6", "NAVBOT_PCH_FILE=\"navbot_pch_css.h\""  }
 

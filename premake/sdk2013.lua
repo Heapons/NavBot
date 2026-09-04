@@ -1,7 +1,7 @@
 project "NavBot-SDK2013"
     language "C++"
     kind "SharedLib"
-    cppdialect "C++17"
+    cppdialect "C++20"
     targetname "navbot.ext.2.sdk2013"
     defines { "SOURCE_ENGINE=9", "NAVBOT_PCH_FILE=\"navbot_pch_sdk2013.h\""  }
 

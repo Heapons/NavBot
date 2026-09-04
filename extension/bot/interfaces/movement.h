@@ -304,6 +304,13 @@ public:
 	// Handles water movement.
 	void DoWaterMove(const Vector& pos, const bool raiseHeight, const bool exitingwater = false, const int weight = MOVEWEIGHT_DEFAULT);
 	/**
+	 * @brief Makes the bot airstrafe towards a specific position.
+	 * @param pos Position to airstrafe to.
+	 * @param allowBraking If true, allow braking if the bot is potentially going to overshoot the landing.
+	 * @param weight Move call weight. If another call was made with a higher weight than the current call, then the current is ignored.
+	 */
+	virtual void AirStrafeTowards(const Vector& pos, const bool allowBraking = true, const int weight = MOVEWEIGHT_DEFAULT);
+	/**
 	 * @brief Moves the bot by setting their velocity
 	 * @param pos Position to move towards.
 	 * @param speed Optional speed, otherwise run speed is used.

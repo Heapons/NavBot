@@ -828,14 +828,14 @@ void CExtManager::SPAPI_CallPreBotUpdate(int bot)
 {
 	if (m_prebotupdateforward->GetFunctionCount() > 0)
 	{
-#if SM_BUILD_MINOR_INT >= SM_VERSION_1_13
+#if SMINTERFACE_EXTENSIONAPI_VERSION >= 9
 		sp::CallArgs args;
 		args.PushCell(static_cast<cell_t>(bot));
 		m_prebotupdateforward->Execute(args);
 #else
 		m_prebotupdateforward->PushCell(static_cast<cell_t>(bot));
 		m_prebotupdateforward->Execute();
-#endif // SM_BUILD_IS_DEV_BRANCH
+#endif // SMINTERFACE_EXTENSIONAPI_VERSION >= 9
 	}
 }
 

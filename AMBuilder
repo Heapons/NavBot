@@ -73,7 +73,10 @@ pch_sources_shared = [
   'atomic',
   'mutex',
   'future',
-  'thread'
+  'thread',
+  'ranges',
+  'format',
+  'numbers'
 ]
 
 for sdk_name in Extension.sdks:

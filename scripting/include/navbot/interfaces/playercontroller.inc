@@ -102,4 +102,32 @@ methodmap NavBotPlayerControllerInterface < NavBotBotInterface
 	 * @error				Invalid interface pointer or invalid button ID.
 	 */
 	public static native void ReleaseButtonByID(Address ptr, NavBotButtonID button);
+	/**
+	 * Gets the yaw and pitch difference of the bot's current eye angles and the desired look.
+	 * If no aim at command is active, this returns the last computed difference.
+	 * The illustration below shows the Pitch and Yaw signs based on where the bot's crosshair is in relation to the desired aim angles.
+	 * 
+	 * P = Pitch, Y = Yaw, X = look target
+	 * 
+	 *			|
+	 *	  +P -Y | +P +Y
+	 *			|
+	 *	 -------X-------
+	 *			|
+	 *	  -P -Y | -P +Y
+	 *			|
+	 *
+	 * @param ptr			Interface pointer.
+	 * @param yaw			Float ref to write the yaw value to.
+	 * @param pitch			Float ref to write the pitch value to.
+	 */
+	public static native void GetPitchYawDifference(Address ptr, float& yaw = 0.0, float& pitch = 0.0);
+	/**
+	 * Gets the world position the bot is currently trying to aim at.
+	 * Note: If no aim at command is active, this returns the last position.
+	 * 
+	 * @param ptr			Interface pointer.
+	 * @param pos			Float array to write the position to.
+	 */
+	public static native void GetLookAtTarget(Address ptr, float pos[3]);
 }
