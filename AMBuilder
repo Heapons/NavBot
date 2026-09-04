@@ -75,7 +75,6 @@ pch_sources_shared = [
   'future',
   'thread',
   'ranges',
-  'format',
   'numbers'
 ]
 

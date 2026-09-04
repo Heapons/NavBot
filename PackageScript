@@ -57,49 +57,10 @@ def CopyFilesGlob(src, dest, pattern):
     builder.AddCopy(str(f), dest_entry)
 
 # Include files 
-CopyFiles('scripting/include', 'addons/sourcemod/scripting/include',
-  [ 
-    'navbot.inc',
-    'navbot_stocks.inc',
-  ]
-)
-
-CopyFiles('scripting/include/navbot', 'addons/sourcemod/scripting/include/navbot',
-  [ 
-    'baseplayer.inc',
-    'bots.inc',
-    'mod.inc',
-    'nav.inc',
-    'nav_area.inc',
-    'nav_mesh.inc',
-    'nav_blocker.inc',
-    'nav_collector.inc',
-    'utils.inc',
-  ]
-)
-
-CopyFiles('scripting/include/navbot/interfaces', 'addons/sourcemod/scripting/include/navbot/interfaces',
-  [ 
-    'base_interface.inc',
-    'behavior.inc',
-    'combat.inc',
-    'inventory.inc',
-    'path.inc',
-    'sensor.inc',
-    'playercontroller.inc',
-    'movement.inc',
-    'sharedbotmemory.inc',
-    'squad.inc',
-    'dynamic_priority.inc',
-  ]
-)
-
-CopyFiles('scripting/include/navbot/mods', 'addons/sourcemod/scripting/include/navbot/mods',
-  [ 
-    'modhelpers.inc',
-    'zps.inc',
-  ]
-)
+CopyFilesGlob('scripting/include', 'addons/sourcemod/scripting/include', '*.inc')
+CopyFilesGlob('scripting/include/navbot', 'addons/sourcemod/scripting/include/navbot', '*.inc')
+CopyFilesGlob('scripting/include/navbot/interfaces', 'addons/sourcemod/scripting/include/navbot/interfaces', '*.inc')
+CopyFilesGlob('scripting/include/navbot/mods', 'addons/sourcemod/scripting/include/navbot/mods', '*.inc')
 
 # GameData files
 CopyFilesGlob('gamedata/navbot.games', 'addons/sourcemod/gamedata/navbot.games', '*.txt')
